@@ -71,6 +71,6 @@ else:
     free_length = stroke / ratio
     
     # การแสดงผลการจัดสีสปริงและมิติขนาดสเปก
-    st.markdown(f"<div style='background-color:{color_hex}; padding:12px; border-radius:6px; text-align:center;'><h3 style='color:white; margin:0px;'>สปริงแม่พิมพ์ที่แนะนำ: {spring_color}</h3></div>", unsafe_value_allowed=True)
+    st.markdown(f"<div style='background-color:{color_hex}; padding:12px; border-radius:6px; text-align:center;'><h3 style='color:white; margin:0px;'>สปริงแม่พิมพ์ที่แนะนำ: {spring_color}</h3></div>", unsafe_allow_html=True)
     st.info(f"💡 **เหตุผลอ้างอิงทางวิศวกรรม:** {spring_desc}")
     st.success(f"📏 **ความยาวอิสระขั้นต่ำของสปริงที่ควรเลือกใช้ (Free Length - L0):** {free_length:.2f} mm")
