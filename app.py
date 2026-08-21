@@ -1,76 +1,100 @@
 import streamlit as st
 
-# ตั้งค่าหน้าเว็บสไตล์แอปพลิเคชันมือถือ/คอมพิวเตอร์
-st.set_page_config(page_title="Springback & Die Spring Calculator", page_icon="⚙️", layout="centered")
+# --- ตั้งค่าหน้าตาแอปพลิเคชัน ---
+st.set_page_config(
+    page_title="Springback Suite Pro",
+    page_icon="⚙️",
+    layout="centered"
+)
 
-# ฐานข้อมูลพารามิเตอร์วัสดุทางวิศวกรรม
-MATERIAL_DATABASE = {
+# --- ฐานข้อมูลวัสดุแผ่นโลหะ ---
+MATERIAL_DATA = {
     "เหล็กแผ่นทั่วไป (Mild Steel / SS400)": {"E": 207000.0, "YS": 250.0},
     "เหล็กกล้ากำลังสูง (High-Strength Steel)": {"E": 210000.0, "YS": 550.0},
     "อลูมิเนียมแผ่น (Aluminum AL5052)": {"E": 70000.0, "YS": 195.0},
     "สแตนเลสแผ่น (Stainless SUS304)": {"E": 193000.0, "YS": 290.0}
 }
 
-st.title("⚙️ Springback & Die Spring Calculator")
-st.write("แอปพลิเคชันคำนวณการสปริงตัวกลับและแนะนำสเปกสปริงแม่พิมพ์เพื่อการใช้งานจริง")
+# --- ส่วนหัวของแอปพลิเคชัน ---
+st.caption("⚙️ โปรแกรมคำนวณงานวิศวกรรมแม่พิมพ์ (Die & Stamping Engineering App)")
+st.title("Springback & Die Spring Calculator")
+st.write("แอปพลิเคชันคำนวณการดีดกลับของผิวโลหะ และประเมินขนาดสปริงแม่พิมพ์หน้างาน")
 st.markdown("---")
 
-# --- โซนอินพุตเงื่อนไขชิ้นงาน ---
-st.header("📋 1. เงื่อนไขวัสดุและชิ้นงาน")
-selected_material = st.selectbox("เลือกชนิดของวัสดุแผ่น:", list(MATERIAL_DATABASE.keys()))
-t = st.selectbox("เลือกความหนาชิ้นงาน, t (mm):", [0.5, 0.8, 1.0, 1.2, 1.5, 2.0, 3.0, 4.0], index=5)
+# --- โซนอินพุต 1: ข้อมูลชิ้นงาน ---
+st.header("📋 1. ข้อมูลสเปกวัสดุชิ้นงาน")
+mat_choice = st.selectbox("เลือกชนิดวัสดุ:", list(MATERIAL_DATA.keys()))
+sheet_t = st.selectbox("เลือกความหนาของแผ่นชิ้นงาน, t (mm):", [0.5, 0.8, 1.0, 1.2, 1.5, 2.0, 3.0, 4.0], index=5)
 
-E = MATERIAL_DATABASE[selected_material]["E"]
-sigma_y = MATERIAL_DATABASE[selected_material]["YS"]
-st.caption(f"ดัชนีทางทฤษฎี -> Elastic Modulus (E): {E} MPa | Yield Strength (σ_y): {sigma_y} MPa")
+# ดึงข้อมูลภายในมาแสดง
+modulus_E = MATERIAL_DATA[mat_choice]["E"]
+yield_YS = MATERIAL_DATA[mat_choice]["YS"]
+st.caption(f"พารามิเตอร์วัสดุ -> Elastic Modulus (E): {modulus_E} MPa | Yield Strength (σ_y): {yield_YS} MPa")
 
-# --- โซนขนาดพารามิเตอร์แม่พิมพ์ ---
-st.header("📐 2. พารามิเตอร์แม่พิมพ์และระยะกด")
-R_i = st.number_input("รัศมีปลายพั้นช์ดัด, R_i (mm):", min_value=0.1, value=4.0, step=0.1)
-theta_i = st.number_input("มุมพับชิ้นงานที่ต้องการ (องศา °):", min_value=1.0, max_value=180.0, value=90.0, step=1.0)
-stroke = st.number_input("ระยะกดพับของแม่พิมพ์, Stroke (mm):", min_value=0.1, value=15.0, step=1.0)
+# --- โซนอินพุต 2: ขนาดแม่พิมพ์และระยะกดชัก ---
+st.header("📐 2. พารามิเตอร์ขนาดแม่พิมพ์")
+punch_R = st.number_input("รัศมีปลายพั้นช์ดัดงอ, R_i (mm):", min_value=0.1, value=4.0, step=0.1)
 
-st.markdown("---")
+# ฟังก์ชันล็อกมุมมาตรฐาน 90 องศา (ผู้ใช้ไม่ต้องกรอกเอง)
+lock_90 = st.checkbox("ใช้มุมพับมาตรฐาน 90 องศา (Standard 90° V-Bend)", value=True)
 
-# --- โซนโลจิสติกส์การประมวลผลคำนวณ ---
-factor = (R_i * sigma_y) / (E * t)
-K_s = 1 - 3 * factor + 4 * (factor ** 3)
-
-# ตรวจสอบขอบเขตข้อผิดพลาดทางฟิสิกส์
-if K_s > 1 or K_s < 0:
-    st.error("⚠️ พารามิเตอร์อยู่นอกขอบเขตทฤษฎีพลาสติก กรุณาตรวจสอบสัดส่วนความหนาและรัศมีพั้นช์ดัด")
+if lock_90:
+    target_angle = 90.0
+    st.info("🔒 ล็อกมุมดัดพับไว้ที่ 90.0 องศาสำเร็จ (ไม่ต้องระบุตัวเลขเพิ่ม)")
 else:
-    theta_f = theta_i * K_s
-    springback_angle = theta_i - theta_f
-    overbend_angle = theta_i * (2 - K_s)
+    target_angle = st.number_input("ระบุมุมพับชิ้นงานที่ต้องการกำหนดเอง (องศา °):", min_value=1.0, max_value=180.0, value=90.0, step=1.0)
+
+die_stroke = st.number_input("ระยะกดชักของแผ่นกดพิมพ์, Stroke (mm):", min_value=0.1, value=15.0, step=1.0)
+st.markdown("---")
+
+# --- โซนประมวลผลคำนวณ (Processing logic) ---
+calc_factor = (punch_R * yield_YS) / (modulus_E * sheet_t)
+springback_factor_Ks = 1 - 3 * calc_factor + 4 * (calc_factor ** 3)
+
+if springback_factor_Ks > 1 or springback_factor_Ks < 0:
+    st.error("⚠️ ข้อผิดพลาด: พารามิเตอร์อินพุตอยู่นอกขอบเขตการคำนวณตามทฤษฎี กรุณาตรวจสอบขนาดความหนาหรือรัศมีปลายพั้นช์อีกครั้ง")
+else:
+    # คำนวณค่ามุมชดเชย
+    final_angle_tf = target_angle * springback_factor_Ks
+    springback_diff = target_angle - final_angle_tf
+    compensation_punch = target_angle * (2 - springback_factor_Ks)
     
-    st.header("📊 3. ผลการคำนวณและคำแนะนำหน้างาน")
+    st.header("📊 3. ผลการวิเคราะห์และคำแนะนำการออกแบบ")
     
-    # แสดงการคำนวณมุมแบบ Dashboard แถวเรียง 3 คอลัมน์
-    col1, col2, col3 = st.columns(3)
-    col1.metric("สัมประสิทธิ์ Ks", f"{K_s:.3f}")
-    col2.metric("มุมหลังดีดกลับจริง (θ_f)", f"{theta_f:.2f} °")
-    col3.metric("มุมพั้นช์ที่ต้องชดเชย", f"{overbend_angle:.2f} °")
+    # แสดงค่ามุมในลักษณะกล่องข้อมูล 3 คอลัมน์
+    c1, c2, c3 = st.columns(3)
+    c1.metric("สัมประสิทธิ์ Ks", f"{springback_factor_Ks:.3f}")
+    c2.metric("มุมที่ได้จริงหลังดีดกลับ (θ_f)", f"{final_angle_tf:.2f} °")
+    c3.metric("มุมพั้นช์ที่ต้องออกแบบเผื่อ", f"{compensation_punch:.2f} °")
     
-    # คำนวณดัชนีภาระงานเพื่อเลือกคู่สีสปริงแม่พิมพ์ (Die Spring Standard)
-    forming_index = t * sigma_y
-    if forming_index <= 250:
-        spring_color, color_hex, ratio = "สีเขียว (Light Load)", "#10B981", 0.40
-        spring_desc = "ภาระงานเบา ชิ้นงานบาง แรงสปริงแบ็คต่ำ สปริงขยับตัวได้ดี ยืดอายุการใช้งานแม่พิมพ์"
-    elif forming_index <= 500:
-        spring_color, color_hex, ratio = "สีน้ำเงิน (Medium Load)", "#2563EB", 0.32
-        spring_desc = "ภาระงานปานกลาง เหมาะสำหรับงานแผ่นเหล็กทั่วไป ทนรอบการปั๊มชดเชยได้สูง"
-    elif forming_index <= 800:
-        spring_color, color_hex, ratio = "สีแดง (Heavy Load)", "#DC2626", 0.24
-        spring_desc = "ภาระงานหนัก วัสดุเริ่มหนาหรือแข็ง ต้องใช้แรงกด Pad สูงเพื่อต้านแรงดีดกลับ"
+    # ประเมินค่าความเหนียว/แรงต้าน เพื่อแมตช์คู่สีของสปริงแม่พิมพ์ (ISO Standard)
+    load_index = sheet_t * yield_YS
+    if load_index <= 250:
+        color_label, color_code, compress_ratio = "สีเขียว (Light Load)", "#10B981", 0.40
+        reason_text = "ภาระงานดัดพับค่อนข้างเบา ชิ้นงานบาง แรงสปริงแบ็คต่ำ สปริงยืดหยุ่นตัวได้ดี ช่วยเซฟโครงสร้างแม่พิมพ์"
+    elif load_index <= 500:
+        color_label, color_code, compress_ratio = "สีน้ำเงิน (Medium Load)", "#2563EB", 0.32
+        reason_text = "ภาระงานระดับปานกลาง เหมาะสำหรับงานแผ่นเหล็กโครงสร้างทั่วไป สปริงทนรอบปั๊มสโตรกสูงได้ดีเยี่ยม"
+    elif load_index <= 800:
+        color_label, color_code, compress_ratio = "สีแดง (Heavy Load)", "#DC2626", 0.24
+        reason_text = "ภาระงานหนัก ชิ้นงานเริ่มมีความหนาหรือแข็ง ต้องใช้แรงกดต้าน pad สูงเพื่อควบคุมขอบผิวชิ้นงานไม่ให้โก่งตัวดีดกลับ"
     else:
-        spring_color, color_hex, ratio = "สีเหลือง (Extra Heavy Load)", "#F59E0B", 0.20
-        spring_desc = "ภาระงานหนักพิเศษ สำหรับงานเหล็กหนาหรือโลหะ High-Strength ต้านแรงกดกระแทกสูงสุด"
+        color_label, color_code, compress_ratio = "สีเหลือง (Extra Heavy Load)", "#F59E0B", 0.20
+        reason_text = "ภาระงานหนักพิเศษ สำหรับงานแผ่นเหล็กหนาหนืด หรือวัสดุกลุ่ม High-Strength Steel ทนแรงกดกระแทกสูงสุด"
         
-    # คำนวณ Free Length ล่าสุด
-    free_length = stroke / ratio
+    # คำนวณหาค่าความยาวอิสระขั้นต่ำของตัวสปริง (Free Length)
+    calculated_L0 = die_stroke / compress_ratio
     
-    # การแสดงผลการจัดสีสปริงและมิติขนาดสเปก
-    st.markdown(f"<div style='background-color:{color_hex}; padding:12px; border-radius:6px; text-align:center;'><h3 style='color:white; margin:0px;'>สปริงแม่พิมพ์ที่แนะนำ: {spring_color}</h3></div>", unsafe_allow_html=True)
-    st.info(f"💡 **เหตุผลอ้างอิงทางวิศวกรรม:** {spring_desc}")
-    st.success(f"📏 **ความยาวอิสระขั้นต่ำของสปริงที่ควรเลือกใช้ (Free Length - L0):** {free_length:.2f} mm")
+    # พ่นหน้าตาแถบสีและสเปกออกมาบนแอปพลิเคชันแบบคลีน ๆ
+    st.markdown(
+        f"<div style='background-color:{color_code}; padding:14px; border-radius:6px; text-align:center; margin-bottom:15px;'>"
+        f"<h3 style='color:white; margin:0px; font-weight:bold;'>สปริงแม่พิมพ์ที่แนะนำ: {color_label}</h3>"
+        f"</div>", 
+        unsafe_allow_html=True
+    )
+    
+    st.info(f"💡 **เหตุผลอ้างอิงเชิงวิศวกรรม:** {reason_text}")
+    st.success(f"📏 **ขนาดความยาวอิสระของสปริงที่ควรเลือกใช้ (Free Length - L0):** {calculated_L0:.2f} mm")
+
+st.markdown("---")
+st.caption("พัฒนาโดย: โปรเจกต์วิศวกรรมแอปพลิเคชันคำนวณแม่พิมพ์ปั๊มขึ้นรูปใช้งานได้จริงหน้างาน")
