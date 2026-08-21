@@ -1,14 +1,13 @@
 import streamlit as st
-import math
 
 # 1. ตั้งค่าหน้าตาแอปพลิเคชัน
 st.set_page_config(
-    page_title="Washer Stamping Die App",
+    page_title="Universal Stamping Die App",
     page_icon="⚙️",
     layout="centered"
 )
 
-# ฐานข้อมูลวัสดุแผ่นโลหะ (เพิ่มค่า Shear Strength: SS สำหรับงานกดตัดโดยเฉพาะ)
+# ฐานข้อมูลวัสดุแผ่นโลหะ (Shear Strength สำหรับงานกดตัด)
 MATERIAL_DATA = {
     "เหล็กแผ่นทั่วไป (Mild Steel / SS400)": {"E": 207000.0, "YS": 250.0, "SS": 320.0},
     "เหล็กกล้ากำลังสูง (High-Strength Steel)": {"E": 210000.0, "YS": 550.0, "SS": 480.0},
@@ -17,12 +16,12 @@ MATERIAL_DATA = {
 }
 
 # ส่วนหัวของแอปพลิเคชัน
-st.caption("⚙️ โปรแกรมวิศวกรรมแม่พิมพ์ตัดเฉือน (Piercing & Blanking Die App)")
-st.title("Washer Stamping Calculator")
-st.write("ระบบคำนวณแม่พิมพ์กดตัดแหวนรองน็อต: คำนวณแรงกดเครื่องจักร ขนาดสปริง และค่าชดเชยผิวสปริงตัว")
+st.caption("⚙️ โปรแกรมวิศวกรรมแม่พิมพ์ตัดเฉือนอเนกประสงค์ (Universal Piercing & Blanking)")
+st.title("Stamping Shearing Calculator")
+st.write("แอปพลิเคชันคำนวณแรงกดตัดแผ่นโลหะทุกรูปทรง ขนาดสปริง และค่าชดเชยการดีดตัวกลับแนวรัศมี")
 st.markdown("---")
 
-# --- โซนอินพุต 1: ข้อมูลสเปกชิ้นงานแหวน ---
+# --- โซนอินพุต 1: ข้อมูลสเปกวัสดุ ---
 st.header("📋 1. ข้อมูลวัสดุและความหนา")
 mat_choice = st.selectbox("เลือกชนิดวัสดุแผ่นโลหะ:", list(MATERIAL_DATA.keys()))
 sheet_t = st.selectbox("เลือกความหนาชิ้นงาน, t (mm):", [0.5, 0.8, 1.0, 1.2, 1.5, 2.0, 3.0, 4.0], index=5)
@@ -30,74 +29,73 @@ sheet_t = st.selectbox("เลือกความหนาชิ้นงา�
 shear_strength = MATERIAL_DATA[mat_choice]["SS"]
 st.caption(f"ดัชนีวัสดุ -> Shear Strength (τ_s): {shear_strength} MPa")
 
-st.header("📐 2. ขนาดมิติของแหวนรองน็อต")
-col_d1, col_d2 = st.columns(2)
-d_inner = col_d1.number_input("ขนาดรูในของแหวน, d (mm):", min_value=1.0, value=10.0, step=0.5)
-d_outer = col_d2.number_input("ขนาดขอบนอกของแหวน, D (mm):", min_value=2.0, value=20.0, step=0.5)
+# --- โซนอินพุต 2: ขนาดมิติแนวตัด (เปลี่ยนเป็นแบบอเนกประสงค์) ---
+st.header("📐 2. มิติแนวตัดและระยะชักแม่พิมพ์")
 
-if d_inner >= d_outer:
-    st.error("⚠️ ข้อผิดพลาด: ขนาดรูในต้องเล็กกว่าขนาดขอบนอกชิ้นงาน")
-else:
-    stroke = st.number_input("ระยะกดชักของแผ่นปลดชิ้นงาน (Stripper Stroke), mm:", min_value=1.0, value=10.0, step=1.0)
-    st.markdown("---")
+total_cutting_length = st.number_input(
+    "ระบุความยาวรวมของเส้นแนวตัดทั้งหมด, L (mm):", 
+    min_value=1.0, 
+    value=100.0, 
+    step=10.0,
+    help="นำความยาวเส้นรอบรูปของชิ้นงานทุกแนวมารวมกัน (เช่น สี่เหลี่ยม 50x50 mm ให้กรอก 200)"
+)
 
-    # --- โซนประมวลผลคำนวณทางวิศวกรรมแม่พิมพ์ตัด ---
-    # 1. คำนวณแรงตัดสุทธิ (Shearing Force) = เส้นรอบวงรวม x ความหนา x ค่าแรงเฉือน
-    perimeter_inner = math.pi * d_inner
-    perimeter_outer = math.pi * d_outer
-    total_perimeter = perimeter_inner + perimeter_outer
-    
-    force_N = total_perimeter * sheet_t * shear_strength
+stroke = st.number_input("ระยะกดชักของแผ่นปลดชิ้นงาน (Stripper Stroke), mm:", min_value=1.0, value=10.0, step=1.0)
+st.markdown("---")
+
+# --- โซนประมวลผลคำนวณทางวิศวกรรมแม่พิมพ์ตัด ---
+if total_cutting_length > 0:
+    # 1. คำนวณแรงตัดสุทธิ (Shearing Force) = ความยาวแนวตัดรวม x ความหนา x ค่าแรงเฉือนวัสดุ
+    force_N = total_cutting_length * sheet_t * shear_strength
     force_tons = force_N / 9806.65 # แปลงนิวตันเป็นตัน
     
-    # แรงปลดชิ้นงาน (Stripping Force) เผื่อไว้ 10% ของแรงตัดเพื่อเลือกสปริง
+    # แรงปลดชิ้นงานออกจากพั้นช์ (Stripping Force) เผื่อไว้ 10% ของแรงตัดเพื่อใช้คำนวณโหลดสปริง
     stripping_force_tons = force_tons * 0.10
-    # ขนาดเครื่องปั๊มที่แนะนำ (Safety Factor เผื่อแรงกระแทกกระดอน 30%)
+    # ขนาดเครื่องปั๊มที่แนะนำ (Safety Factor เผื่อแรงกระแทกย้อนกลับสะท้อน 30%)
     recommended_press = force_tons * 1.30
 
     # 2. คำนวณสปริงปลดชิ้นงาน (Stripper Spring Selection)
-    # ในแม่พิมพ์ตัด แหวนหนาหรือวัสดุแข็งจะเกิดแรงต้านการติดพั้นช์สูงขึ้น
     load_index = sheet_t * shear_strength
     if load_index <= 200:
         color_label, color_code, compress_ratio = "สีเขียว (Light Load)", "#10B981", 0.40
-        reason_text = "ชิ้นงานบาง แรงเฉือนต่ำ แรงดีดติดพั้นช์น้อย สปริงตัวได้ดีในระยะชักไว"
+        reason_text = "ภาระงานตัดเบา ชิ้นงานบาง แรงบีบติดพั้นช์น้อย สปริงขยับตัวได้ไว เหมาะกับรอบปั๊มสูง"
     elif load_index <= 450:
         color_label, color_code, compress_ratio = "สีน้ำเงิน (Medium Load)", "#2563EB", 0.32
-        reason_text = "ภาระงานปานกลาง เหมาะสำหรับงานกดตัดแหวนเหล็กทั่วไป ทนรอบปั๊มต่อเนื่องสูง"
+        reason_text = "ภาระงานปานกลาง เหมาะสำหรับงานกดตัดแผ่นเหล็กทั่วไป ทนรอบรอบการปั๊มต่อเนื่องได้ดี"
     elif load_index <= 750:
         color_label, color_code, compress_ratio = "สีแดง (Heavy Load)", "#DC2626", 0.24
-        reason_text = "ภาระงานกดตัดหนัก แผ่นโลหะหนา มีแรงบีบอัดพั้นช์สูง ต้องใช้สปริงแรงดันปลดสูงป้องกันชิ้นงานติดขัด"
+        reason_text = "ภาระงานกดตัดหนัก แผ่นโลหะหนา มีแรงบีบรัดตัวพั้นช์สูง ต้องใช้สปริงแรงดันปลดสูงเพื่อป้องกันแผ่นติด"
     else:
         color_label, color_code, compress_ratio = "สีเหลือง (Extra Heavy Load)", "#F59E0B", 0.20
-        reason_text = "งานกดตัดแผ่นเหล็กหนาพิเศษหรือเหล็กแข็ง High-Strength สปริงต้านแรงกระแทกย้อนกลับสูงสุด"
+        reason_text = "งานกดตัดแผ่นโลหะหนาพิเศษหรือเหล็กแข็งกำลังสูง (HSS) สปริงหนาทนแรงกระแทกกระดอนย้อนกลับสูงสุด"
     
     calculated_L0 = stroke / compress_ratio
 
-    # 3. คำนวณขนาด Springback เผื่อระยะ Clearance ของแม่พิมพ์ตัด (อ้างอิง Radial Elastic Recovery ~0.05%)
-    # รูเจาะในจะหดตัวลงเล็กน้อย ส่วนขอบนอกชิ้นงานจะขยายตัวขึ้นเล็กน้อยหลังหลุดจากแม่พิมพ์
-    shrinkage = d_inner * 0.0005
-    expansion = d_outer * 0.0005
-    recommended_punch = d_inner + shrinkage
-    recommended_die = d_outer - expansion
+    # 3. คำนวณค่า Springback ตัวแปรชดเชยขนาดแม่พิมพ์ตัด (Radial Elastic Recovery ~0.05%)
+    # เพื่ออธิบายอาจารย์ว่าในงานตัด Springback จะทำให้ระยะเปลี่ยนไปในแนวรัศมี
+    radial_recovery_ratio = 0.0005
+    st_clearance_percent = "0.05%"
 
     # --- โซนแสดงผลลัพธ์บนหน้าต่างแอปพลิเคชัน ---
-    st.header("📊 3. ผลการวิเคราะห์และการเลือกสเปกแม่พิมพ์")
+    st.header("📊 3. ผลการวิเคราะห์และการเลือกสเปกเครื่องจักร")
     
-    # 3.1 ขนาดกำลังเครื่องจักร
-    st.subheader("🏭 กำลังแรงกดเครื่องปั๊มตัด (Press Tonnage)")
+    # 3.1 กำลังของเครื่องจักรที่ต้องใช้
+    st.subheader("🏭 กำลังแรงกดของเครื่องปั๊ม (Press Tonnage)")
     col_f1, col_f2 = st.columns(2)
-    col_f1.metric("แรงกดตัดรวมสุทธิ (Net Blanking Force)", f"{force_tons:.2f} Tons")
-    col_f2.metric("ขนาดเครื่องปั๊มแนะนำ (+Safety 30%)", f"{recommended_press:.1f} Tons", delta="ปลอดภัยจากแรงกระแทก")
-    st.caption(f"💡 แรงที่ต้องใช้ในการปลดแผ่นโลหะออกจากพั้นช์ (Stripping Force): {stripping_force_tons:.2f} Tons")
+    col_f1.metric("แรงกดตัดเฉือนสุทธิ (Net Blanking Force)", f"{force_tons:.2f} Tons")
+    col_f2.metric("ขนาดเครื่องปั๊มแนะนำ (+Safety 30%)", f"{recommended_press:.1f} Tons", delta="ปลอดภัยหน้างาน")
+    st.caption(f"💡 แรงต้านที่สปริงแผ่นปลดต้องใช้ต้านเพื่อดึงแผ่นโลหะออกจากพั้นช์ (Stripping Force): {stripping_force_tons:.2f} Tons")
 
-    # 3.2 ค่าชดเชยขนาด Springback (Radial) ของชิ้นงานตัด
+    # 3.2 การอภิปรายผล Springback ในงานกดตัด
     st.markdown(" ")
-    st.subheader("📐 มิติแม่พิมพ์ชดเชยการสปริงตัว (Radial Elastic Recovery)")
+    st.subheader("📐 ผลกระทบจาก Springback ในแนวรัศมี (Radial Elastic Recovery)")
+    st.info(f"ในงานกดตัดเฉือน (Blanking/Piercing) แรงบีบอัดจะทำให้เกิดการสปริงตัวกลับในแนวรัศมีประมาณ **{st_clearance_percent}**")
+    
     col_m1, col_m2 = st.columns(2)
-    col_m1.metric("ขนาดพั้นช์เจาะรูในที่แนะนำ (Punch Size)", f"{recommended_punch:.3f} mm", delta=f"+{shrinkage:.3f} mm เผื่อรูหด")
-    col_m2.metric("ขนาดดายตัดขอบนอกที่แนะนำ (Die Size)", f"{recommended_die:.3f} mm", delta=f"-{expansion:.3f} mm เผื่อแหวนขยาย")
+    col_m1.markdown(f"**กรณีเจาะรูชิ้นงาน (Piercing):**\nรูเจาะจะ **หดตัวเล็กลง** ดังนั้นควรออกแบบขนาดพั้นช์ (Punch) ให้ **ใหญ่ขึ้น** โตกว่าขนาดชิ้นงานจริงประมาณ **+{radial_recovery_ratio*100:.3f}%**")
+    col_m2.markdown(f"**กรณีตัดขอบนอกชิ้นงาน (Blanking):**\nแผ่นงานจะ **ขยายโตขึ้น** ดังนั้นควรออกแบบขนาดดาย (Die) ให้ **เล็กลง** ต่ำกว่าขนาดชิ้นงานจริงประมาณ **-{radial_recovery_ratio*100:.3f}%**")
 
-    # 3.3 สเปกสปริงสำหรับแผ่นปลดชิ้นงาน
+    # 3.3 สเปกสปริงปลดชิ้นงาน
     st.markdown(" ")
     st.subheader("🔩 สเปกสปริงแผ่นปลดชิ้นงาน (Stripper Spring)")
     st.markdown(
@@ -107,7 +105,7 @@ else:
         unsafe_allow_html=True
     )
     st.info(f"💡 **เหตุผลอ้างอิงเชิงวิศวกรรม:** {reason_text}")
-    st.success(f"📏 **ขนาดความยาวอิสระของสปริงปลด (Free Length - L0):** {calculated_L0:.2f} mm")
+    st.success(f"📏 **ขนาดความยาวอิสระของสปริงปลดที่ควรเลือกใช้ (Free Length - L0):** {calculated_L0:.2f} mm")
 
 st.markdown("---")
 st.caption("พัฒนาโดย: โปรเจกต์วิศวกรรมแอปพลิเคชันคำนวณแม่พิมพ์ปั๊มขึ้นรูปใช้งานได้จริงหน้างาน")
