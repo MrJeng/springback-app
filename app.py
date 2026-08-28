@@ -29,15 +29,15 @@ sheet_t = st.selectbox("เลือกความหนาชิ้นงา�
 shear_strength = MATERIAL_DATA[mat_choice]["SS"]
 st.caption(f"ดัชนีวัสดุ -> Shear Strength (τ_s): {shear_strength} MPa")
 
-# --- โซนอินพุต 2: ขนาดมิติแนวตัด (เปลี่ยนเป็นความยาวเส้นรอบวงตามคำขอ) ---
+# --- โซนอินพุต 2: ขนาดมิติแนวตัด (ปรับคำเป็น เส้นรอบรูป ตามคำขอ) ---
 st.header("📐 2. มิติแนวตัดและระยะชักแม่พิมพ์")
 
 total_perimeter = st.number_input(
-    "ระบุความยาวเส้นรอบวง / เส้นรอบรูปแนวตัดรวม, L (mm):", 
+    "ระบุความยาวเส้นรอบรูปแนวตัดรวม, L (mm):", 
     min_value=1.0, 
     value=100.0, 
     step=10.0,
-    help="ใส่ค่าความยาวรวมของเส้นแนวตัดทั้งหมด (เช่น ถ้าเจาะรูทรงกลม ให้ใส่ค่าเส้นรอบวงของรูเจาะนั้น)"
+    help="ใส่ค่าความยาวรวมของเส้นขอบแนวตัดทั้งหมด (เช่น ถ้างานสี่เหลี่ยม 25x25 mm ให้กรอก 100)"
 )
 
 stroke = st.number_input("ระยะกดชักของแผ่นปลดชิ้นงาน (Stripper Stroke), mm:", min_value=1.0, value=10.0, step=1.0)
@@ -47,7 +47,7 @@ st.markdown("---")
 if total_perimeter > 0:
     # 1. คำนวณแรงตัดสุทธิ (Shearing Force) = ความยาวเส้นรอบรูปแนวตัดรวม x ความหนา x ค่าแรงเฉือนวัสดุ
     force_N = total_perimeter * sheet_t * shear_strength
-    force_tons = force_N / 9806.65 # แปลงนิวตันเป็นตัน
+    force_tons = force_N / 9806.65 # # แปลงนิวตันเป็นตัน (Metric Tons)
     
     # แรงปลดชิ้นงานออกจากพั้นช์ (Stripping Force) เผื่อไว้ 10% ของแรงตัดเพื่อใช้คำนวณโหลดสปริง
     stripping_force_tons = force_tons * 0.10
