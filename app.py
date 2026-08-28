@@ -1,9 +1,8 @@
 import streamlit as st
-import math
 
 # 1. ตั้งค่าหน้าตาแอปพลิเคชัน
 st.set_page_config(
-    page_title="Stamping Hole Die App",
+    page_title="Universal Stamping Die App",
     page_icon="⚙️",
     layout="centered"
 )
@@ -17,9 +16,9 @@ MATERIAL_DATA = {
 }
 
 # ส่วนหัวของแอปพลิเคชัน
-st.caption("⚙️ โปรแกรมวิศวกรรมแม่พิมพ์กดตัดเฉือนอเนกประสงค์ (Piercing & Blanking Die App)")
-st.title("Stamping Hole Calculator")
-st.write("แอปพลิเคชันคำนวณแม่พิมพ์กดตัดเจาะรูแผ่นโลหะ: คำนวณแรงกดเครื่องจักร ขนาดสปริง และค่าชดเชยผิวสปริงตัว")
+st.caption("⚙️ โปรแกรมวิศวกรรมแม่พิมพ์กดตัดเฉือนอเนกประสงค์ (Blanking & Piercing Die App)")
+st.title("Stamping Shearing Calculator")
+st.write("แอปพลิเคชันคำนวณแม่พิมพ์กดตัดแผ่นโลหะ: คำนวณแรงกดเครื่องจักร ขนาดสปริง และค่าชดเชยผิวสปริงตัว")
 st.markdown("---")
 
 # --- โซนอินพุต 1: ข้อมูลสเปกวัสดุ ---
@@ -30,36 +29,24 @@ sheet_t = st.selectbox("เลือกความหนาชิ้นงา�
 shear_strength = MATERIAL_DATA[mat_choice]["SS"]
 st.caption(f"ดัชนีวัสดุ -> Shear Strength (τ_s): {shear_strength} MPa")
 
-# --- โซนอินพุต 2: ขนาดมิติไดอะมิเตอร์รูเจาะ (ตามคำขอ) ---
-st.header("📐 2. มิติขนาดรูเจาะและระยะชักแม่พิมพ์")
+# --- โซนอินพุต 2: ขนาดมิติแนวตัด (เปลี่ยนเป็นความยาวเส้นรอบวงตามคำขอ) ---
+st.header("📐 2. มิติแนวตัดและระยะชักแม่พิมพ์")
 
-col_d1, col_d2 = st.columns(2)
-hole_diameter = col_d1.number_input(
-    "ระบุขนาดไดอะมิเตอร์รูเจาะ, d (mm):", 
-    min_value=0.5, 
-    value=10.0, 
-    step=0.5,
-    help="ใส่ขนาดเส้นผ่านศูนย์กลางของรูเจาะทรงกลมที่คุณต้องการ"
-)
-
-hole_qty = col_d2.number_input(
-    "ระบุจำนวนรูเจาะทั้งหมด (รู):", 
-    min_value=1, 
-    value=1, 
-    step=1,
-    help="ระบุจำนวนรูทั้งหมดที่แม่พิมพ์จะกดตัดพร้อมกันใน 1 สโตรก (เช่น หากตัดแหวนรองน็อตให้ระบุเป็น 2 รู คือรูในและขอบนอก)"
+total_perimeter = st.number_input(
+    "ระบุความยาวเส้นรอบวง / เส้นรอบรูปแนวตัดรวม, L (mm):", 
+    min_value=1.0, 
+    value=100.0, 
+    step=10.0,
+    help="ใส่ค่าความยาวรวมของเส้นแนวตัดทั้งหมด (เช่น ถ้าเจาะรูทรงกลม ให้ใส่ค่าเส้นรอบวงของรูเจาะนั้น)"
 )
 
 stroke = st.number_input("ระยะกดชักของแผ่นปลดชิ้นงาน (Stripper Stroke), mm:", min_value=1.0, value=10.0, step=1.0)
 st.markdown("---")
 
 # --- โซนประมวลผลคำนวณทางวิศวกรรมแม่พิมพ์ตัด ---
-if hole_diameter > 0 and hole_qty > 0:
-    # คำนวณหาความยาวเส้นรอบรูปแนวตัดรวมหลังบ้าน (L) = π * d * จำนวนรู
-    total_cutting_length = math.pi * hole_diameter * hole_qty
-    
-    # 1. คำนวณแรงตัดสุทธิ (Shearing Force) = ความยาวแนวตัดรวม x ความหนา x ค่าแรงเฉือนวัสดุ
-    force_N = total_cutting_length * sheet_t * shear_strength
+if total_perimeter > 0:
+    # 1. คำนวณแรงตัดสุทธิ (Shearing Force) = ความยาวเส้นรอบรูปแนวตัดรวม x ความหนา x ค่าแรงเฉือนวัสดุ
+    force_N = total_perimeter * sheet_t * shear_strength
     force_tons = force_N / 9806.65 # แปลงนิวตันเป็นตัน
     
     # แรงปลดชิ้นงานออกจากพั้นช์ (Stripping Force) เผื่อไว้ 10% ของแรงตัดเพื่อใช้คำนวณโหลดสปริง
@@ -84,10 +71,8 @@ if hole_diameter > 0 and hole_qty > 0:
     
     calculated_L0 = stroke / compress_ratio
 
-    # 3. คำนวณขนาด Springback เผื่อระยะชดเชยตัวพิมพ์เจาะรู (Radial Elastic Recovery ~0.05%)
-    # หลังหลุดจากพั้นช์ ผิวเนื้อโลหะจะสปริงตัวหดกลับเข้าจุดศูนย์กลาง ทำให้รูเจาะเล็กลงเล็กน้อย
-    shrinkage = hole_diameter * 0.0005
-    recommended_punch = hole_diameter + shrinkage
+    # 3. คำนวณค่าชดเชยขนาดจากผลกระทบ Springback แนวรัศมี (Radial Elastic Recovery ~0.05%)
+    radial_recovery_ratio = 0.0005
 
     # --- โซนแสดงผลลัพธ์บนหน้าต่างแอปพลิเคชัน ---
     st.header("📊 3. ผลการวิเคราะห์และการเลือกสเปกเครื่องจักร")
@@ -97,17 +82,16 @@ if hole_diameter > 0 and hole_qty > 0:
     col_f1, col_f2 = st.columns(2)
     col_f1.metric("แรงกดตัดเฉือนสุทธิ (Net Blanking Force)", f"{force_tons:.2f} Tons")
     col_f2.metric("ขนาดเครื่องปั๊มแนะนำ (+Safety 30%)", f"{recommended_press:.1f} Tons", delta="ปลอดภัยหน้างาน")
-    st.caption(f"📊 (ความยาวแนวตัดรวมเบื้องหลัง: {total_cutting_length:.1f} mm) | แรงที่แผ่นปลดต้องใช้ดึงแผ่นโลหะออกจากพั้นช์: {stripping_force_tons:.2f} Tons")
+    st.caption(f"📊 แรงที่แผ่นปลดต้องใช้ดึงแผ่นโลหะออกจากพั้นช์ (Stripping Force): {stripping_force_tons:.2f} Tons")
 
-    # 3.2 ค่าชดเชยขนาด Springback (Radial Elastic Recovery) ของรูเจาะ
+    # 3.2 ค่าผลกระทบ Springback ในงานกดตัด
     st.markdown(" ")
-    st.subheader("📐 มิติแม่พิมพ์ชดเชยการสปริงตัวหดกลับ (Hole Shrinkage)")
-    st.metric(
-        "ขนาดพั้นช์เจาะรูที่แนะนำ (Recommended Punch Size)", 
-        f"{recommended_punch:.3f} mm", 
-        delta=f"+{shrinkage:.3f} mm เผื่อรูหดตัวหลังปั๊มตัด"
-    )
-    st.info("💡 **คำอธิบายทางวิศวกรรม:** ในงานเจาะรู (Piercing) หลังจากพั้นช์กดตัดขาด เนื้อโลหะจะเกิดการสปริงตัวกลับในแนวรัศมีบีบเข้าหากัน ทำให้รูแคบลงเล็กน้อย โปรแกรมจึงแนะนำให้เพิ่มขนาดตัวพั้นช์ตามระยะด้านบน เพื่อให้ชิ้นงานที่ได้ออกมามีขนาดตรงสเปกพอดี")
+    st.subheader("📐 ผลกระทบจาก Springback ในแนวรัศมี (Radial Elastic Recovery)")
+    st.info("ในงานกดตัดเฉือนโลหะแผ่น (Blanking/Piercing) แรงบีบอัดสไลด์จะทำให้เกิดการสปริงตัวกลับในแนวรัศมีประมาณ **0.05%**")
+    
+    col_m1, col_m2 = st.columns(2)
+    col_m1.markdown(f"**กรณีงานเจาะรูชิ้นงาน (Piercing):**\nรูเจาะจะ **หดตัวเล็กลง** ควรออกแบบขนาดพั้นช์ (Punch) ให้ **โตขึ้นกว่าขนาดชิ้นงานจริงประมาณ +0.05%** เพื่อชดเชยการหดตัว")
+    col_m2.markdown(f"**กรณีงานตัดขอบนอกชิ้นงาน (Blanking):**\nแผ่นงานจะ **ขยายโตขึ้น** ควรออกแบบขนาดดาย (Die) ให้ **เล็กกว่าขนาดชิ้นงานจริงประมาณ -0.05%** เพื่อชดเชยการขยายตัว")
 
     # 3.3 สเปกสปริงปลดชิ้นงาน
     st.markdown(" ")
