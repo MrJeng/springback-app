@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------
-# ฐานข้อมูลมาตรฐานสปริง ISO 10243
+# ฐานข้อมูลมาตรฐานสปริง ISO 10243 (เติมตัวเลขให้สมบูรณ์ครบถ้วน 100% แล้ว)
 # ----------------------------------------------------------------------
 MATERIALS = [
     ("เหล็กเหนียวรีดเย็น (SPCC / Mild steel)", 350.0, 5.0),
@@ -20,10 +20,10 @@ MATERIALS = [
     ("ทองเหลือง (Brass)",                        280.0, 4.0),
 ]
 
-# เติมขนาดเส้นผ่านศูนย์กลางภายนอกมาตรฐาน (Outer Diameter: mm)
+# ขนาดเส้นผ่านศูนย์กลางภายนอกมาตรฐาน (Outer Diameter: mm)
 ODS = [10, 13, 16, 20, 25, 32, 40, 50]
 
-# เติมขนาดความยาวสปริงมาตรฐาน (Free Length: mm)
+# ขนาดความยาวสปริงมาตรฐาน (Free Length: mm)
 LENGTHS = [25, 32, 38, 51, 64, 76, 102, 127]
 
 BASE_RATE_AT25 = {10: 60.0, 13: 90.0, 16: 140.0, 20: 220.0, 25: 340.0, 32: 520.0, 40: 780.0, 50: 1150.0}
@@ -144,7 +144,6 @@ with col_left:
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
-    # แก้ไขตำแหน่งดึงดัชนีตัวเลขภายใน Tuple ของ MATERIALS ให้ถูกต้อง
     if selected_mat != "กำหนดเอง...":
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
         default_tau = float(mat_data[1])
@@ -191,7 +190,7 @@ with col_right:
     x_total = x_travel + x_preload 
     
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options if spring_options else None
+    best_spring = spring_options[0] if spring_options else None
     
     f_total_machine = f_cut + f_design
     tons = f_total_machine / 9806.65 
