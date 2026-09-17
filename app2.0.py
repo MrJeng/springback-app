@@ -74,37 +74,82 @@ def calculate_spring_options(x_total, f_design, cap_springs):
 st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด ⚙️")
 st.caption("คำนวณแรงตัด แรงสตริป แรงกดรวม และแนะนำสเปกสปริงมาตรฐาน (ISO 10243)")
 
+# --- เพิ่มคำอธิบายความหมายของแต่ละตัวแปรในส่วนสูตรคำนวณตามรูปภาพ ---
 with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
     st.markdown("### **สูตรและที่มาของการคำนวณ**")
+    st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลของแม่พิมพ์กดตัด พร้อมความหมายตัวแปรดังนี้:")
+    
     st.latex(r"1.\quad F_{cut} = L \times t \times \tau")
+    st.markdown("""
+    *   $F_{cut}$ = แรงตัดชิ้นงานรวม (นิวตัน, N)
+    *   $L$ = เส้นรอบรูปขอบตัดรวมทั้งหมด (mm)
+    *   $t$ = ความหนาของแผ่นวัสดุ (mm)
+    *   $\\tau$ = ค่าความต้านทานแรงเฉือนของวัสดุ (Shear Strength, MPa หรือ N/mm²)
+    """)
+    st.markdown("---")
+    
     st.latex(r"2.\quad F_{strip} = F_{cut} \times \left(\frac{K_{strip}}{100}\right)")
+    st.markdown("""
+    *   $F_{strip}$ = แรงถอนชิ้นงานที่จำเป็น (นิวตัน, N)
+    *   $K_{strip}$ = เปอร์เซ็นต์สัดส่วนแรงถอนแผ่นงาน (Stripping Force Factor, %)
+    """)
+    st.markdown("---")
+    
     st.latex(r"3.\quad F_{design} = F_{strip} \times SF")
+    st.markdown("""
+    *   $F_{design}$ = แรงออกแบบรวมสำหรับสปริงหลังจากเผื่อค่าความปลอดภัยแล้ว (นิวตัน, N)
+    *   $SF$ = ตัวคูณเผื่อความปลอดภัย (Safety Factor)
+    """)
+    st.markdown("---")
+    
     st.latex(r"4.\quad X_{total} = X_{travel} + X_{preload}")
+    st.markdown("""
+    *   $X_{total}$ = ระยะยุบตัวรวมสะสมที่เกิดขึ้นกับสปริง (mm)
+    *   $X_{travel}$ = ระยะยุบตัวจากการช่วงชักทำงานจริง (Working Stroke, mm)
+    *   $X_{preload}$ = ระยะยุบตัวจากการกดพรีโหลดตั้งต้นตอนประกอบ (Preload, mm)
+    """)
+    st.markdown("---")
+    
     st.latex(r"5.\quad n = \lceil \frac{F_{design}}{K \times X_{total}} \rceil")
+    st.markdown("""
+    *   $n$ = จำนวนสปริงที่จำเป็นต้องใช้ติดตั้ง (ตัว) โดยปัดเศษขึ้นเป็นจำนวนเต็มเสมอ ($\\lceil \\rceil$)
+    *   $K$ = ค่าคงที่สปริง 1 ตัว (Spring Rate, N/mm) อ้างอิงตามสเปกมาตรฐาน ISO 10243
+    """)
+    st.markdown("---")
+    
     st.latex(r"6.\quad F_{machine} = F_{cut} + F_{design}")
+    st.markdown("""
+    *   $F_{machine}$ = แรงรวมทั้งหมดที่กดลงเครื่องปั๊มโดยประมาณ (นิวตัน, N) เป็นแรงกระทำร่วมระหว่างแรงตัดชิ้นงานและแรงต้านจากสปริงสตริปเปอร์
+    """)
+    st.markdown("---")
+    
     st.latex(r"7.\quad \text{Tons} = \frac{F_{machine}}{9806.65}")
+    st.markdown("""
+    *   $\text{Tons}$ = ขนาดแรงรวมกดลงเครื่องปั๊มเมื่อแปลงหน่วยจาก นิวตัน (N) เป็น **ตันแรง (Metric Tons)**
+    *   $9806.65$ = ค่าคงที่แรงโน้มถ่วงมาตรฐานเพื่อใช้ในการแปลงหน่วยแรง ($1\text{ kgf} \approx 9.80665\text{ N}$)
+    """)
 
 st.markdown("---")
 
 col_left, col_right = st.columns([1, 2.5], gap="medium")
 
-# --- ฝั่งซ้าย: กล่องป้อนข้อมูลดิบ พร้อมคำอธิบายความหมายแต่ละตัว ---
+# --- ฝั่งซ้าย: กล่องป้อนข้อมูลดิบ ---
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    mat_names = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
+    mat_names = [m for m in MATERIALS] + ["กำหนดเอง..."]
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
     if selected_mat != "กำหนดเอง...":
-        mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
-        default_tau = float(mat_data[1])
-        default_kstrip = float(mat_data[2])
+        mat_data = next(m for m in MATERIALS if m == selected_mat)
+        default_tau = float(mat_data)
+        default_kstrip = float(mat_data)
     else:
         default_tau = 450.0
         default_kstrip = 8.0
 
-    st.markdown("") # เว้นวรรคเล็กน้อยเพื่อความสวยงาม
+    st.markdown("") 
     tau = st.number_input("แรงเฉือนวัสดุ τ (MPa)", value=default_tau, step=10.0)
     st.caption("💡 Shear Strength: ค่าความต้านทานแรงเฉือนของวัสดุ หาได้จากตารางสเปกโลหะหรือคู่มือวิศวกรรม")
     
@@ -115,7 +160,7 @@ with col_left:
     st.caption("💡 Total Cutting Perimeter: ความยาวเส้นรอบขอบของชิ้นงานตรงบริเวณที่ถูกใบมีด/พั้นช์ตัดทั้งหมดรวมกัน")
     
     kstrip = st.number_input("สัดส่วนแรงถอนแผ่น K_strip (%)", value=default_kstrip, step=0.5)
-    st.caption("💡 Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพั้นช์ตัด (โดยทั่วไปอยู่ระหว่าง 3% - 20% ขึ้นอยู่กับความแข็งของวัสดุ)")
+    st.caption("💡 Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพั้นช์ตัด")
     
     sf = st.number_input("ค่าความปลอดภัย Safety Factor (SF)", value=1.3, step=0.1)
     st.caption("💡 ค่าเผื่อความปลอดภัยทางวิศวกรรม เพื่อป้องกันปัญหาสปริงล้าหรือแรงกดไม่พอในระยะยาว")
@@ -142,7 +187,7 @@ with col_right:
     x_total = x_travel + x_preload 
     
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options[0] if spring_options else None
+    best_spring = spring_options if spring_options else None
     
     f_total_machine = f_cut + f_design
     tons = f_total_machine / 9806.65 
@@ -185,10 +230,3 @@ with col_right:
                 "ผลรวม (N)": f"{s['total']:,.0f}",
                 "สถานะ": status
             })
-            
-        df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.error("ไม่พบข้อมูลสปริงที่เหมาะสมกับเงื่อนไขนี้")
-        
-    st.caption("**หมายเหตุ:** ค่าคงที่สปริง (K) เป็นค่าประมาณเชิงวิศวกรรมเพื่อการประเมินเบื้องต้น อ้างอิงตามมาตรฐาน ISO 10243")
