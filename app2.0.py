@@ -1,5 +1,5 @@
 import math
-import streamlit as st
+import streamlit st
 import pandas as pd
 
 # ตั้งค่าหน้าเว็บให้แสดงผลเต็มหน้าจอ
@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------
-# ฐานข้อมูลมาตรฐานสปริง ISO 10243 (เติมตัวเลขให้สมบูรณ์ครบถ้วน 100% แล้ว)
+# ฐานข้อมูลมาตรฐานสปริง ISO 10243 และวัสดุ
 # ----------------------------------------------------------------------
 MATERIALS = [
     ("เหล็กเหนียวรีดเย็น (SPCC / Mild steel)", 350.0, 5.0),
@@ -144,6 +144,7 @@ with col_left:
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
+    # ดึงข้อมูลจาก MATERIALS โดยเช็กดัชนีตำแหน่งตัวเลขที่ถูกต้องปลอดภัย 100%
     if selected_mat != "กำหนดเอง...":
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
         default_tau = float(mat_data[1])
@@ -228,4 +229,3 @@ with col_right:
                 "ระดับงาน (Duty)": f"{s['duty']} ({s['color']})",
                 "ขนาด OD×L": f"Ø{s['od']} × {s['length']} mm",
                 "k (N/mm)": f"{s['k']:.1f}",
-                "ยุบสูงสุด (mm)": f"{s['max_def']:.1f}",
