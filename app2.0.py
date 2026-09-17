@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------
-# ฐานข้อมูลมาตรฐานสปริง ISO 10243 (แก้ไข: เติมตัวเลขสเปกสปริงให้สมบูรณ์แล้ว)
+# ฐานข้อมูลมาตรฐานสปริง ISO 10243
 # ----------------------------------------------------------------------
 MATERIALS = [
     ("เหล็กเหนียวรีดเย็น (SPCC / Mild steel)", 350.0, 5.0),
@@ -140,10 +140,11 @@ col_left, col_right = st.columns([1, 2.5], gap="medium")
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    mat_list = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
-    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_list, index=1)
+    mat_names_only = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
+    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
+    # แก้ไขตำแหน่งดึงดัชนีตัวเลขภายใน Tuple ของ MATERIALS ให้ถูกต้อง
     if selected_mat != "กำหนดเอง...":
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
         default_tau = float(mat_data[1])
@@ -190,7 +191,7 @@ with col_right:
     x_total = x_travel + x_preload 
     
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options[0] if spring_options else None
+    best_spring = spring_options if spring_options else None
     
     f_total_machine = f_cut + f_design
     tons = f_total_machine / 9806.65 
@@ -229,4 +230,3 @@ with col_right:
                 "ขนาด OD×L": f"Ø{s['od']} × {s['length']} mm",
                 "k (N/mm)": f"{s['k']:.1f}",
                 "ยุบสูงสุด (mm)": f"{s['max_def']:.1f}",
-                "จำนวน": int(s["n"]),
