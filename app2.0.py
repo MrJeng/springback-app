@@ -74,29 +74,15 @@ def calculate_spring_options(x_total, f_design, cap_springs):
 st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด ⚙️")
 st.caption("คำนวณแรงตัด แรงสตริป แรงกดรวม และแนะนำสเปกสปริงมาตรฐาน (ISO 10243)")
 
-# --- ส่วนที่เพิ่มเข้ามาใหม่: แถบอธิบายสูตรคำนวณที่ใช้ในแอป ---
 with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
     st.markdown("### **สูตรและที่มาของการคำนวณ**")
-    st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลของแม่พิมพ์กดตัด ดังนี้:")
-    
-    st.latex(r"1.\quad \text{แรงตัดชิ้นงาน (Cutting Force: } F_{cut}\text{)} = L \times t \times \tau")
-    st.caption("โดยที่: L = เส้นรอบรูปขอบตัดรวม (mm), t = ความหนาแผ่นวัสดุ (mm), τ = แรงเฉือนวัสดุ (MPa หรือ N/mm²)")
-    
-    st.latex(r"2.\quad \text{แรงถอนชิ้นงานที่ต้องการ (Stripping Force: } F_{strip}\text{)} = F_{cut} \times \left(\frac{K_{strip}}{100}\right)")
-    st.caption("โดยที่: K_strip = เปอร์เซ็นต์สัดส่วนแรงถอนแผ่นงานที่ส่งผลต้านการเคลื่อนที่กลับ")
-    
-    st.latex(r"3.\quad \text{แรงออกแบบรวมสำหรับสปริง (Design Force: } F_{design}\text{)} = F_{strip} \times SF")
-    st.caption("โดยที่: SF = ค่าตัวคูณเผื่อความปลอดภัย (Safety Factor)")
-    
-    st.latex(r"4.\quad \text{ระยะยุบตัวรวมสะสมของสปริง (Total Deflection: } X_{total}\text{)} = X_{travel} + X_{preload}")
-    st.caption("โดยที่: X_travel = ระยะยุบตัวจากช่วงชักงาน (mm), X_preload = ระยะยุบจากการกดพรีโหลดตั้งต้น (mm)")
-    
-    st.latex(r"5.\quad \text{จำนวนสปริงที่ต้องใช้ (Number of Springs: } n\text{)} = \lceil \frac{F_{design}}{K \times X_{total}} \rceil")
-    st.caption("โดยที่: K = ค่าคงที่สปริง 1 ตัว (N/mm) คำนวณตามมาตรฐาน ISO 10243, ⌈ ⌉ = ฟังก์ชันปัดเศษขึ้นเป็นจำนวนเต็ม")
-    
-    st.latex(r"6.\quad \text{แรงรวมกดลงเครื่องปั๊ม (Total Machine Force: } F_{machine}\text{)} = F_{cut} + F_{design}")
-    st.latex(r"7.\quad \text{การแปลงหน่วยเป็นตัน (Tons)} = \frac{F_{machine}}{9806.65}")
-    st.caption("หมายเหตุ: 1 ตันแรง (Metric Ton-force) มีค่าประมาณ 9,806.65 นิวตัน")
+    st.latex(r"1.\quad F_{cut} = L \times t \times \tau")
+    st.latex(r"2.\quad F_{strip} = F_{cut} \times \left(\frac{K_{strip}}{100}\right)")
+    st.latex(r"3.\quad F_{design} = F_{strip} \times SF")
+    st.latex(r"4.\quad X_{total} = X_{travel} + X_{preload}")
+    st.latex(r"5.\quad n = \lceil \frac{F_{design}}{K \times X_{total}} \rceil")
+    st.latex(r"6.\quad F_{machine} = F_{cut} + F_{design}")
+    st.latex(r"7.\quad \text{Tons} = \frac{F_{machine}}{9806.65}")
 
 st.markdown("---")
 
@@ -106,14 +92,18 @@ col_left, col_right = st.columns([1, 2.5], gap="medium")
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    mat_names = [m for m in MATERIALS] + ["กำหนดเอง..."]
-    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1)
+    # ดึงเฉพาะชื่อวัสดุ (ข้อความ) ออกมาแสดงในตารางตัวเลือก Selectbox เท่านั้นเพื่อป้องกัน Error ทับซ้อน
+    mat_names = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
+    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1) # ค่าเริ่มต้นสแตนเลส
     
     if selected_mat != "กำหนดเอง...":
-        mat_data = next(m for m in MATERIALS if m == selected_mat)
-        default_tau, default_kstrip = mat_data, mat_data
+        # ค้นหาข้อมูลวัสดุที่เลือกและดึงค่าตัวเลขออกมาใช้งานโดยตรง
+        mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
+        default_tau = float(mat_data[1])
+        default_kstrip = float(mat_data[2])
     else:
-        default_tau, default_kstrip = 450.0, 8.0
+        default_tau = 450.0
+        default_kstrip = 8.0
 
     tau = st.number_input("แรงเฉือนวัสดุ τ (MPa)", value=default_tau, step=10.0)
     thickness = st.number_input("ความหนาแผ่น t (mm)", value=1.0, step=0.1)
@@ -136,12 +126,11 @@ with col_right:
     x_total = x_travel + x_preload 
     
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options if spring_options else None
+    best_spring = spring_options[0] if spring_options else None
     
     f_total_machine = f_cut + f_design
     tons = f_total_machine / 9806.65 
     
-    # ส่วนการแสดงผลลัพธ์แบบการ์ดตัวเลข (Metrics Dashboard)
     c1, c2, c3 = st.columns(3)
     c1.metric("แรงตัด F_cut", f"{f_cut:,.0f} N")
     c2.metric("แรงถอนที่ต้องการ", f"{f_strip_req:,.0f} N")
