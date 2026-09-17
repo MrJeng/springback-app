@@ -88,16 +88,15 @@ st.markdown("---")
 
 col_left, col_right = st.columns([1, 2.5], gap="medium")
 
-# --- ฝั่งซ้าย: กล่องป้อนข้อมูลดิบ ---
+# --- ฝั่งซ้าย: กล่องป้อนข้อมูลดิบ พร้อมคำอธิบายความหมายแต่ละตัว ---
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    # ดึงเฉพาะชื่อวัสดุ (ข้อความ) ออกมาแสดงในตารางตัวเลือก Selectbox เท่านั้นเพื่อป้องกัน Error ทับซ้อน
     mat_names = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
-    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1) # ค่าเริ่มต้นสแตนเลส
+    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1)
+    st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
     if selected_mat != "กำหนดเอง...":
-        # ค้นหาข้อมูลวัสดุที่เลือกและดึงค่าตัวเลขออกมาใช้งานโดยตรง
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
         default_tau = float(mat_data[1])
         default_kstrip = float(mat_data[2])
@@ -105,16 +104,33 @@ with col_left:
         default_tau = 450.0
         default_kstrip = 8.0
 
+    st.markdown("") # เว้นวรรคเล็กน้อยเพื่อความสวยงาม
     tau = st.number_input("แรงเฉือนวัสดุ τ (MPa)", value=default_tau, step=10.0)
+    st.caption("💡 Shear Strength: ค่าความต้านทานแรงเฉือนของวัสดุ หาได้จากตารางสเปกโลหะหรือคู่มือวิศวกรรม")
+    
     thickness = st.number_input("ความหนาแผ่น t (mm)", value=1.0, step=0.1)
+    st.caption("💡 Sheet Thickness: ความหนาของแผ่นเหล็กหรือแผ่นงานจริงที่จะถูกกดตัด")
+    
     perimeter = st.number_input("เส้นรอบรูปตัดรวม L (mm)", value=220.0, step=10.0)
+    st.caption("💡 Total Cutting Perimeter: ความยาวเส้นรอบขอบของชิ้นงานตรงบริเวณที่ถูกใบมีด/พั้นช์ตัดทั้งหมดรวมกัน")
+    
     kstrip = st.number_input("สัดส่วนแรงถอนแผ่น K_strip (%)", value=default_kstrip, step=0.5)
+    st.caption("💡 Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพั้นช์ตัด (โดยทั่วไปอยู่ระหว่าง 3% - 20% ขึ้นอยู่กับความแข็งของวัสดุ)")
+    
     sf = st.number_input("ค่าความปลอดภัย Safety Factor (SF)", value=1.3, step=0.1)
+    st.caption("💡 ค่าเผื่อความปลอดภัยทางวิศวกรรม เพื่อป้องกันปัญหาสปริงล้าหรือแรงกดไม่พอในระยะยาว")
     
     st.markdown("---")
+    st.markdown("### **ข้อมูลระยะชักสปริง**")
+    
     x_travel = st.number_input("ระยะยุบตัวสำหรับการทำงาน (mm)", value=5.2, step=0.1)
+    st.caption("💡 Working Stroke: ระยะที่แผ่นสปริงจะต้องยุบลงไปจริงๆ ตอนที่กลไกแม่พิมพ์กดลงมาทำงาน")
+    
     x_preload = st.number_input("ระยะพรีโหลดติดตั้ง preload (mm)", value=3.0, step=0.1)
+    st.caption("💡 Preload: ระยะที่สปริงถูกกดบีบไว้ตั้งแต่ตอนประกอบชุดแม่พิมพ์ เพื่อให้สปริงมีแรงกดตั้งต้นส่งผลทันที")
+    
     cap_springs = st.number_input("จำนวนสปริงสูงสุด", value=4, step=1)
+    st.caption("💡 Maximum Springs: ข้อจำกัดของพื้นที่ในแม่พิมพ์ ว่าสามารถใส่สปริงลงไปได้มากที่สุดกี่ตัว")
 
 # --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์ ---
 with col_right:
