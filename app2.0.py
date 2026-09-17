@@ -74,7 +74,6 @@ def calculate_spring_options(x_total, f_design, cap_springs):
 st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด ⚙️")
 st.caption("คำนวณแรงตัด แรงสตริป แรงกดรวม และแนะนำสเปกสปริงมาตรฐาน (ISO 10243)")
 
-# --- เพิ่มคำอธิบายความหมายของแต่ละตัวแปรในส่วนสูตรคำนวณตามรูปภาพ ---
 with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
     st.markdown("### **สูตรและที่มาของการคำนวณ**")
     st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลของแม่พิมพ์กดตัด พร้อมความหมายตัวแปรดังนี้:")
@@ -137,14 +136,16 @@ col_left, col_right = st.columns([1, 2.5], gap="medium")
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    mat_names = [m for m in MATERIALS] + ["กำหนดเอง..."]
-    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1)
+    # 💡 แก้ไข: ดึงเฉพาะข้อความชื่อวัสดุที่เป็น String ไปแสดงผลใน Dropdown เพื่อป้องกัน Type Error
+    mat_list = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
+    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_list, index=1) # ค่าเริ่มต้นเป็น สแตนเลส (SUS304)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
     
+    # ค้นหาค่าตัวเลขตามชื่อวัสดุที่เป็นข้อความ
     if selected_mat != "กำหนดเอง...":
-        mat_data = next(m for m in MATERIALS if m == selected_mat)
-        default_tau = float(mat_data)
-        default_kstrip = float(mat_data)
+        mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
+        default_tau = float(mat_data[1])
+        default_kstrip = float(mat_data[2])
     else:
         default_tau = 450.0
         default_kstrip = 8.0
@@ -187,7 +188,7 @@ with col_right:
     x_total = x_travel + x_preload 
     
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options if spring_options else None
+    best_spring = spring_options[0] if spring_options else None
     
     f_total_machine = f_cut + f_design
     tons = f_total_machine / 9806.65 
@@ -226,7 +227,3 @@ with col_right:
                 "ขนาด OD×L": f"Ø{s['od']} × {s['length']} mm",
                 "k (N/mm)": f"{s['k']:.1f}",
                 "ยุบสูงสุด (mm)": f"{s['max_def']:.1f}",
-                "จำนวน": int(s["n"]),
-                "ผลรวม (N)": f"{s['total']:,.0f}",
-                "สถานะ": status
-            })
