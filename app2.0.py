@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------
-# ฐานข้อมูลมาตรฐานสปริง ISO 10243 (ใส่ค่าให้สมบูรณ์เพื่อใช้คำนวณสูตร)
+# ฐานข้อมูลมาตรฐานสปริง ISO 10243
 # ----------------------------------------------------------------------
 MATERIALS = [
     ("เหล็กเหนียวรีดเย็น (SPCC / Mild steel)", 350.0, 5.0),
@@ -20,16 +20,10 @@ MATERIALS = [
     ("ทองเหลือง (Brass)",                        280.0, 4.0),
 ]
 
-# ขนาดเส้นผ่านศูนย์กลางภายนอก (Outer Diameter: mm)
 ODS = [10, 13, 16, 20, 25, 32, 40, 50]
-
-# ความยาวสปริงมาตรฐาน (Free Length: mm)
 LENGTHS = [25, 32, 38, 51, 64, 76, 102, 127]
-
-# ค่า Rigidity พื้นฐานเริ่มต้นที่ความยาว 25mm ของแต่ละขนาด OD
 BASE_RATE_AT25 = {10: 60.0, 13: 90.0, 16: 140.0, 20: 220.0, 25: 340.0, 32: 520.0, 40: 780.0, 50: 1150.0}
 
-# ประเภทระดับงาน สี และสัดส่วนระยะยุบตัวสูงสุด (Max Deflection %)
 DUTIES = [
     {"key": "L",  "name": "เบา (Light)",            "color_name": "เหลือง", "mult": 1.0, "max_pct": 0.45},
     {"key": "M",  "name": "กลาง (Medium)",           "color_name": "น้ำเงิน", "mult": 1.6, "max_pct": 0.40},
@@ -38,14 +32,12 @@ DUTIES = [
 ]
 
 # ----------------------------------------------------------------------
-# ฟังก์ชันคำนวณทางวิศวกรรมสปริง (สูตรคำนวณหลัก)
+# ฟังก์ชันคำนวณทางวิศวกรรมสปริง
 # ----------------------------------------------------------------------
 def spring_rate(od, length, duty):
-    # สูตรคำนวณหาค่าคงที่สปริง K (N/mm) ตามขนาดและประเภทงาน
     return BASE_RATE_AT25[od] * (25 / length) * duty["mult"]
 
 def max_deflection(length, duty):
-    # สูตรคำนวณระยะยุบตัวสูงสุดที่ยอมรับได้เพื่อไม่ให้สปริงล้าเร็วกว่ากำหนด
     return length * duty["max_pct"]
 
 def calculate_spring_options(x_total, f_design, cap_springs):
@@ -53,17 +45,12 @@ def calculate_spring_options(x_total, f_design, cap_springs):
     for duty in DUTIES:
         best_for_duty = None
         for od in ODS:
-            # คัดเลือกความยาวสปริงที่สามารถยุบตัวได้มากกว่าหรือเท่ากับระยะยุบรวมที่ต้องการ
             valid_lengths = [l for l in LENGTHS if max_deflection(l, duty) >= x_total]
             if not valid_lengths:
                 continue
             length = min(valid_lengths)
             k = spring_rate(od, length, duty)
-            
-            # คำนวณแรงกดของสปริง 1 ตัวที่ระยะยุบรวม (F = K * x)
             f_spring = k * x_total
-            
-            # คำนวณจำนวนสปริงที่ต้องใช้ (ปัดเศษขึ้นเป็นจำนวนเต็มเสมอ)
             n = math.ceil(f_design / f_spring) if f_spring > 0 else 1
             total = n * f_spring
             
@@ -78,16 +65,40 @@ def calculate_spring_options(x_total, f_design, cap_springs):
                 best_for_duty = candidate
         if best_for_duty:
             results.append(best_for_duty)
-            
-    # เรียงลำดับให้ตัวที่ผ่านเกณฑ์จำนวนสปริงและให้แรงกดพอดีที่สุดขึ้นก่อน
     results.sort(key=lambda x: (x["n"] > cap_springs, x["n"], x["total"]))
     return results
 
 # ========================================================================
-# ส่วนการแสดงผลบนหน้าจอเว็บ (UI ของ Streamlit)
+# การจัดวางหน้าจอเว็บ (UI ของ Streamlit)
 # ========================================================================
-st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด")
+st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด ⚙️")
 st.caption("คำนวณแรงตัด แรงสตริป แรงกดรวม และแนะนำสเปกสปริงมาตรฐาน (ISO 10243)")
+
+# --- ส่วนที่เพิ่มเข้ามาใหม่: แถบอธิบายสูตรคำนวณที่ใช้ในแอป ---
+with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
+    st.markdown("### **สูตรและที่มาของการคำนวณ**")
+    st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลของแม่พิมพ์กดตัด ดังนี้:")
+    
+    st.latex(r"1.\quad \text{แรงตัดชิ้นงาน (Cutting Force: } F_{cut}\text{)} = L \times t \times \tau")
+    st.caption("โดยที่: L = เส้นรอบรูปขอบตัดรวม (mm), t = ความหนาแผ่นวัสดุ (mm), τ = แรงเฉือนวัสดุ (MPa หรือ N/mm²)")
+    
+    st.latex(r"2.\quad \text{แรงถอนชิ้นงานที่ต้องการ (Stripping Force: } F_{strip}\text{)} = F_{cut} \times \left(\frac{K_{strip}}{100}\right)")
+    st.caption("โดยที่: K_strip = เปอร์เซ็นต์สัดส่วนแรงถอนแผ่นงานที่ส่งผลต้านการเคลื่อนที่กลับ")
+    
+    st.latex(r"3.\quad \text{แรงออกแบบรวมสำหรับสปริง (Design Force: } F_{design}\text{)} = F_{strip} \times SF")
+    st.caption("โดยที่: SF = ค่าตัวคูณเผื่อความปลอดภัย (Safety Factor)")
+    
+    st.latex(r"4.\quad \text{ระยะยุบตัวรวมสะสมของสปริง (Total Deflection: } X_{total}\text{)} = X_{travel} + X_{preload}")
+    st.caption("โดยที่: X_travel = ระยะยุบตัวจากช่วงชักงาน (mm), X_preload = ระยะยุบจากการกดพรีโหลดตั้งต้น (mm)")
+    
+    st.latex(r"5.\quad \text{จำนวนสปริงที่ต้องใช้ (Number of Springs: } n\text{)} = \lceil \frac{F_{design}}{K \times X_{total}} \rceil")
+    st.caption("โดยที่: K = ค่าคงที่สปริง 1 ตัว (N/mm) คำนวณตามมาตรฐาน ISO 10243, ⌈ ⌉ = ฟังก์ชันปัดเศษขึ้นเป็นจำนวนเต็ม")
+    
+    st.latex(r"6.\quad \text{แรงรวมกดลงเครื่องปั๊ม (Total Machine Force: } F_{machine}\text{)} = F_{cut} + F_{design}")
+    st.latex(r"7.\quad \text{การแปลงหน่วยเป็นตัน (Tons)} = \frac{F_{machine}}{9806.65}")
+    st.caption("หมายเหตุ: 1 ตันแรง (Metric Ton-force) มีค่าประมาณ 9,806.65 นิวตัน")
+
+st.markdown("---")
 
 col_left, col_right = st.columns([1, 2.5], gap="medium")
 
@@ -95,17 +106,14 @@ col_left, col_right = st.columns([1, 2.5], gap="medium")
 with col_left:
     st.markdown("### **ค่าที่ป้อน**")
     
-    mat_names = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
-    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1) # ค่าเริ่มต้นเป็น สแตนเลส (SUS304) ตามภาพ
+    mat_names = [m for m in MATERIALS] + ["กำหนดเอง..."]
+    selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names, index=1)
     
-    # ดึงค่าแรงเฉือนและเปอร์เซ็นต์แรงสตริปเปอร์เริ่มต้นตามวัสดุที่เลือก
     if selected_mat != "กำหนดเอง...":
-        mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
-        default_tau = mat_data[1]
-        default_kstrip = mat_data[2]
+        mat_data = next(m for m in MATERIALS if m == selected_mat)
+        default_tau, default_kstrip = mat_data, mat_data
     else:
-        default_tau = 450.0
-        default_kstrip = 8.0
+        default_tau, default_kstrip = 450.0, 8.0
 
     tau = st.number_input("แรงเฉือนวัสดุ τ (MPa)", value=default_tau, step=10.0)
     thickness = st.number_input("ความหนาแผ่น t (mm)", value=1.0, step=0.1)
@@ -118,32 +126,22 @@ with col_left:
     x_preload = st.number_input("ระยะพรีโหลดติดตั้ง preload (mm)", value=3.0, step=0.1)
     cap_springs = st.number_input("จำนวนสปริงสูงสุด", value=4, step=1)
 
-# --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์แบบเรียลไทม์ ---
+# --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์ ---
 with col_right:
     st.markdown("### **ผลการคำนวณ**")
     
-    # 💥 สูตรคำนวณแรงเฉือนตัดชิ้นงาน (Force = Perimeter * Thickness * Shear Strength)
     f_cut = perimeter * thickness * tau
-    
-    # 💥 สูตรคำนวณแรงถอนชิ้นงานที่ต้องการถอดออกจากแม่พิมพ์ (Stripping Force)
     f_strip_req = f_cut * (kstrip / 100.0)
-    
-    # 💥 สูตรคำนวณแรงออกแบบรวมหลังจากเผื่อค่าความปลอดภัย (Design Force)
     f_design = f_strip_req * sf
-    
-    # 💥 สูตรคำนวณระยะยุบรวมสะสมของสปริง (Total Deflection = Travel + Preload)
     x_total = x_travel + x_preload 
     
-    # เรียกใช้ฟังก์ชันประมวลผลหาทางเลือกสปริงที่ดีที่สุด
     spring_options = calculate_spring_options(x_total, f_design, cap_springs)
-    best_spring = spring_options[0] if spring_options else None
+    best_spring = spring_options if spring_options else None
     
-    # 💥 สูตรประเมินแรงรวมกดลงเครื่องปั๊มทั้งหมด (แรงตัด + แรงต้านจากสปริงออกแบบ)
     f_total_machine = f_cut + f_design
-    # แปลงหน่วยแรงจาก นิวตัน (N) ไปเป็นหน่วย ตัน (Tons) -> หารด้วยแรงโน้มถ่วงมาตรฐาน 9806.65
     tons = f_total_machine / 9806.65 
     
-    # --- ส่วนการแสดงผลลัพธ์แบบการ์ดตัวเลข (Metrics Dashboard) ---
+    # ส่วนการแสดงผลลัพธ์แบบการ์ดตัวเลข (Metrics Dashboard)
     c1, c2, c3 = st.columns(3)
     c1.metric("แรงตัด F_cut", f"{f_cut:,.0f} N")
     c2.metric("แรงถอนที่ต้องการ", f"{f_strip_req:,.0f} N")
@@ -159,7 +157,6 @@ with col_right:
 
     st.markdown("---")
     
-    # แถบแจ้งเตือนสีเขียวสรุปผลการวิเคราะห์เหมือนในภาพ
     if best_spring:
         st.success(
             f"**แนะนำประเมิน:** ระดับงาน **{best_spring['duty']}** "
