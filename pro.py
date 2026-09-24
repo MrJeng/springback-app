@@ -273,7 +273,7 @@ col_left, col_right = st.columns([1, 2.5], gap="medium")
 
 # --- ฝั่งซ้าย: กล่องป้อนข้อมูลดิบ ---
 with col_left:
-    st.markdown("### **ค่าที่ป้อน**")
+    st.markdown("### **ค่าชิ้นงาน**")
 
     mat_names_only = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
