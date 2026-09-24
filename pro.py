@@ -13,16 +13,16 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------------------------
-# พื้นหลัง: ชิ้นส่วนวิศวกรรม (เฟือง สปริง น็อต ประแจ) จางๆ กระจายเต็มพื้นหลัง
-# จัดวางเป็นกริดระยะห่างเท่ากันในภาพเดียว (ไม่ใช่ tile ที่ซ้ำแบบวอลเปเปอร์)
-# วาดเป็น SVG ฝังในโค้ดเอง ไม่ต้องโหลดรูปจากอินเทอร์เน็ต
+# พื้นหลัง: สีกรม (navy) เข้ม พร้อมชิ้นส่วนวิศวกรรม (เฟือง สปริง น็อต ประแจ)
+# จางๆ กระจายเต็มพื้นหลัง จัดวางเป็นกริดระยะห่างเท่ากันในภาพเดียว
+# (ไม่ใช่ tile ที่ซ้ำแบบวอลเปเปอร์) วาดเป็น SVG ฝังในโค้ดเอง ไม่ต้องโหลดรูปจากอินเทอร์เน็ต
 # ----------------------------------------------------------------------
 st.markdown(
     """
     <style>
     [data-testid="stAppViewContainer"] {
-        background-color: #16202b;
-        background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1200' viewBox='0 0 1920 1200'%3E%3Cdefs%3E%3Cg id='gear1'%3E%3Ccircle r='26'/%3E%3Ccircle r='8' fill='%23324659'/%3E%3Cg%3E%3Crect x='-4' y='-34' width='8' height='11'/%3E%3Crect x='-4' y='23' width='8' height='11'/%3E%3Crect x='-34' y='-4' width='11' height='8'/%3E%3Crect x='23' y='-4' width='11' height='8'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(45)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(135)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(225)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(315)'/%3E%3C/g%3E%3C/g%3E%3Cg id='gear2'%3E%3Ccircle r='20'/%3E%3Ccircle r='6' fill='%23324659'/%3E%3Cg%3E%3Crect x='-3' y='-27' width='6' height='9'/%3E%3Crect x='-3' y='18' width='6' height='9'/%3E%3Crect x='-27' y='-3' width='9' height='6'/%3E%3Crect x='18' y='-3' width='9' height='6'/%3E%3C/g%3E%3C/g%3E%3Cg id='spring1'%3E%3Cpath d='M-22 -30 L-8 -18 L-22 -6 L-8 6 L-22 18 L-8 30'/%3E%3Cline x1='-22' y1='-38' x2='-22' y2='-30'/%3E%3Cline x1='-8' y1='30' x2='-8' y2='38'/%3E%3C/g%3E%3Cg id='hex1'%3E%3Cpolygon points='0,-24 21,-12 21,12 0,24 -21,12 -21,-12'/%3E%3Ccircle r='8'/%3E%3C/g%3E%3Cg id='hex2'%3E%3Cpolygon points='0,-17 15,-8.5 15,8.5 0,17 -15,8.5 -15,-8.5'/%3E%3Ccircle r='6'/%3E%3C/g%3E%3Cg id='wave1'%3E%3Cpath d='M-30 0 q7.5 -18 15 0 q7.5 18 15 0 q7.5 -18 15 0'/%3E%3Ccircle cx='-30' cy='0' r='5' fill='%23324659'/%3E%3Ccircle cx='30' cy='0' r='5' fill='%23324659'/%3E%3C/g%3E%3Cg id='wrench1'%3E%3Cline x1='-24' y1='0' x2='24' y2='0'/%3E%3Ccircle cx='-24' cy='0' r='9'/%3E%3Cpath d='M18 -9 L30 -9 L30 9 L18 9'/%3E%3C/g%3E%3Cg id='bolt1'%3E%3Cline x1='-10' y1='0' x2='10' y2='0'/%3E%3Cline x1='0' y1='-10' x2='0' y2='10'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='none' stroke='%23324659' stroke-width='2' opacity='0.4'%3E%3Cuse href='%23gear1' x='160' y='140'/%3E%3Cuse href='%23spring1' x='500' y='110'/%3E%3Cuse href='%23hex1' x='860' y='150'/%3E%3Cuse href='%23wave1' x='1220' y='120'/%3E%3Cuse href='%23gear2' x='1580' y='150'/%3E%3Cuse href='%23wrench1' x='340' y='380'/%3E%3Cuse href='%23hex2' x='700' y='400'/%3E%3Cuse href='%23gear1' x='1060' y='370'/%3E%3Cuse href='%23spring1' x='1420' y='390'/%3E%3Cuse href='%23bolt1' x='1760' y='380'/%3E%3Cuse href='%23hex1' x='120' y='620'/%3E%3Cuse href='%23wave1' x='480' y='640'/%3E%3Cuse href='%23gear2' x='840' y='610'/%3E%3Cuse href='%23wrench1' x='1200' y='630'/%3E%3Cuse href='%23hex2' x='1560' y='620'/%3E%3Cuse href='%23spring1' x='260' y='860'/%3E%3Cuse href='%23gear1' x='620' y='880'/%3E%3Cuse href='%23bolt1' x='980' y='850'/%3E%3Cuse href='%23hex1' x='1340' y='870'/%3E%3Cuse href='%23wave1' x='1700' y='860'/%3E%3Cuse href='%23wrench1' x='180' y='1080'/%3E%3Cuse href='%23gear2' x='560' y='1100'/%3E%3Cuse href='%23hex2' x='920' y='1070'/%3E%3Cuse href='%23spring1' x='1280' y='1090'/%3E%3Cuse href='%23gear1' x='1640' y='1080'/%3E%3C/g%3E%3C/svg%3E");
+        background-color: #0d1b3e;
+        background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1200' viewBox='0 0 1920 1200'%3E%3Cdefs%3E%3Cg id='gear1'%3E%3Ccircle r='26'/%3E%3Ccircle r='8' fill='%233c5a8a'/%3E%3Cg%3E%3Crect x='-4' y='-34' width='8' height='11'/%3E%3Crect x='-4' y='23' width='8' height='11'/%3E%3Crect x='-34' y='-4' width='11' height='8'/%3E%3Crect x='23' y='-4' width='11' height='8'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(45)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(135)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(225)'/%3E%3Crect x='-4' y='-34' width='8' height='11' transform='rotate(315)'/%3E%3C/g%3E%3C/g%3E%3Cg id='gear2'%3E%3Ccircle r='20'/%3E%3Ccircle r='6' fill='%233c5a8a'/%3E%3Cg%3E%3Crect x='-3' y='-27' width='6' height='9'/%3E%3Crect x='-3' y='18' width='6' height='9'/%3E%3Crect x='-27' y='-3' width='9' height='6'/%3E%3Crect x='18' y='-3' width='9' height='6'/%3E%3C/g%3E%3C/g%3E%3Cg id='spring1'%3E%3Cpath d='M-22 -30 L-8 -18 L-22 -6 L-8 6 L-22 18 L-8 30'/%3E%3Cline x1='-22' y1='-38' x2='-22' y2='-30'/%3E%3Cline x1='-8' y1='30' x2='-8' y2='38'/%3E%3C/g%3E%3Cg id='hex1'%3E%3Cpolygon points='0,-24 21,-12 21,12 0,24 -21,12 -21,-12'/%3E%3Ccircle r='8'/%3E%3C/g%3E%3Cg id='hex2'%3E%3Cpolygon points='0,-17 15,-8.5 15,8.5 0,17 -15,8.5 -15,-8.5'/%3E%3Ccircle r='6'/%3E%3C/g%3E%3Cg id='wave1'%3E%3Cpath d='M-30 0 q7.5 -18 15 0 q7.5 18 15 0 q7.5 -18 15 0'/%3E%3Ccircle cx='-30' cy='0' r='5' fill='%233c5a8a'/%3E%3Ccircle cx='30' cy='0' r='5' fill='%233c5a8a'/%3E%3C/g%3E%3Cg id='wrench1'%3E%3Cline x1='-24' y1='0' x2='24' y2='0'/%3E%3Ccircle cx='-24' cy='0' r='9'/%3E%3Cpath d='M18 -9 L30 -9 L30 9 L18 9'/%3E%3C/g%3E%3Cg id='bolt1'%3E%3Cline x1='-10' y1='0' x2='10' y2='0'/%3E%3Cline x1='0' y1='-10' x2='0' y2='10'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='none' stroke='%233c5a8a' stroke-width='2' opacity='0.45'%3E%3Cuse href='%23gear1' x='160' y='140'/%3E%3Cuse href='%23spring1' x='500' y='110'/%3E%3Cuse href='%23hex1' x='860' y='150'/%3E%3Cuse href='%23wave1' x='1220' y='120'/%3E%3Cuse href='%23gear2' x='1580' y='150'/%3E%3Cuse href='%23wrench1' x='340' y='380'/%3E%3Cuse href='%23hex2' x='700' y='400'/%3E%3Cuse href='%23gear1' x='1060' y='370'/%3E%3Cuse href='%23spring1' x='1420' y='390'/%3E%3Cuse href='%23bolt1' x='1760' y='380'/%3E%3Cuse href='%23hex1' x='120' y='620'/%3E%3Cuse href='%23wave1' x='480' y='640'/%3E%3Cuse href='%23gear2' x='840' y='610'/%3E%3Cuse href='%23wrench1' x='1200' y='630'/%3E%3Cuse href='%23hex2' x='1560' y='620'/%3E%3Cuse href='%23spring1' x='260' y='860'/%3E%3Cuse href='%23gear1' x='620' y='880'/%3E%3Cuse href='%23bolt1' x='980' y='850'/%3E%3Cuse href='%23hex1' x='1340' y='870'/%3E%3Cuse href='%23wave1' x='1700' y='860'/%3E%3Cuse href='%23wrench1' x='180' y='1080'/%3E%3Cuse href='%23gear2' x='560' y='1100'/%3E%3Cuse href='%23hex2' x='920' y='1070'/%3E%3Cuse href='%23spring1' x='1280' y='1090'/%3E%3Cuse href='%23gear1' x='1640' y='1080'/%3E%3C/g%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center top;
         background-size: 100% auto;
@@ -30,6 +30,25 @@ st.markdown(
     }
     [data-testid="stHeader"] {
         background: rgba(0, 0, 0, 0);
+    }
+    /* ปรับสีตัวอักษรทั่วไปให้อ่านง่ายบนพื้นหลังสีกรมเข้ม */
+    [data-testid="stAppViewContainer"] h1,
+    [data-testid="stAppViewContainer"] h2,
+    [data-testid="stAppViewContainer"] h3,
+    [data-testid="stAppViewContainer"] h4,
+    [data-testid="stAppViewContainer"] p,
+    [data-testid="stAppViewContainer"] li,
+    [data-testid="stAppViewContainer"] label,
+    [data-testid="stAppViewContainer"] span,
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stCaptionContainer"],
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"] {
+        color: #eef2f5 !important;
+    }
+    /* กล่องแจ้งเตือน (success/warning/error) คงตัวอักษรเข้มไว้ เพราะพื้นกล่องเป็นสีอ่อน */
+    [data-testid="stAlert"] * {
+        color: #182430 !important;
     }
     </style>
     """,
