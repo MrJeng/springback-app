@@ -46,9 +46,17 @@ st.markdown(
     [data-testid="stMetricValue"] {
         color: #eef2f5 !important;
     }
-    /* กล่องแจ้งเตือน (success/warning/error) คงตัวอักษรเข้มไว้ เพราะพื้นกล่องเป็นสีอ่อน */
-    [data-testid="stAlert"] * {
-        color: #182430 !important;
+    /* กล่องแจ้งเตือน (success/warning/error) ให้ตัวอักษรพื้นฐานเป็นสีเดียวกันหมด (สว่าง อ่านง่ายบนพื้นกล่องสีเข้ม) */
+    [data-testid="stAlert"],
+    [data-testid="stAlert"] p,
+    [data-testid="stAlert"] span,
+    [data-testid="stAlert"] li {
+        color: #eef2f5 !important;
+    }
+    /* ส่วนที่เน้น (**...**) เช่น สเปกสปริงที่แนะนำ ให้เด่นด้วยสีทองและตัวหนา */
+    [data-testid="stAlert"] strong {
+        color: #ffce54 !important;
+        font-weight: 700;
     }
     </style>
     """,
