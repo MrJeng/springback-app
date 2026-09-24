@@ -1,8 +1,9 @@
 import math
+import os
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+import matplotlib.font_manager as fm
 
 # ตั้งค่าหน้าเว็บให้แสดงผลเต็มหน้าจอ
 st.set_page_config(
@@ -10,6 +11,21 @@ st.set_page_config(
     page_icon="⚙️",
     layout="wide"
 )
+
+# ----------------------------------------------------------------------
+# ฝังฟอนต์ภาษาไทยไปกับแอป เพื่อให้ matplotlib วาดตัวอักษรไทยได้ถูกต้อง
+# แม้เซิร์ฟเวอร์ที่ deploy (เช่น Streamlit Cloud) จะไม่มีฟอนต์ไทยติดตั้งไว้
+# ----------------------------------------------------------------------
+THAI_FONT_NAME = None
+_FONT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts", "Loma.otf")
+if os.path.exists(_FONT_PATH):
+    try:
+        fm.fontManager.addfont(_FONT_PATH)
+        THAI_FONT_NAME = fm.FontProperties(fname=_FONT_PATH).get_name()
+        plt.rcParams["font.family"] = THAI_FONT_NAME
+        plt.rcParams["axes.unicode_minus"] = False
+    except Exception:
+        THAI_FONT_NAME = None
 
 # ----------------------------------------------------------------------
 # ฐานข้อมูลมาตรฐานสปริง ISO 10243 และวัสดุ
@@ -80,6 +96,8 @@ def calculate_spring_options(x_total, f_design, cap_springs):
 
 def draw_spring_figure(spring):
     """วาดภาพประกอบสปริงคอยล์แบบง่าย ๆ ด้วย matplotlib ตามสเปกที่เลือก"""
+    fp = fm.FontProperties(fname=_FONT_PATH) if THAI_FONT_NAME else None
+
     fig, ax = plt.subplots(figsize=(6, 3.2))
     color = spring["hex"]
 
@@ -104,13 +122,14 @@ def draw_spring_figure(spring):
     # เส้นบอกขนาด OD (แนวนอน ด้านบน)
     dim_y = top_y + 0.08
     ax.plot([0.5 - body_r, 0.5 + body_r], [dim_y, dim_y], color="#93a7ba", linewidth=1)
-    ax.text(0.5, dim_y + 0.03, f"OD = ⌀{spring['od']} mm", ha="center", fontsize=10, color="#4a5b6b")
+    ax.text(0.5, dim_y + 0.03, f"OD = Ø{spring['od']} mm", ha="center", fontsize=10,
+            color="#4a5b6b", fontproperties=fp)
 
     # เส้นบอกความยาว L (แนวตั้ง ด้านซ้าย)
     dim_x = 0.5 - body_r - 0.12
     ax.plot([dim_x, dim_x], [top_y, bottom_y], color="#93a7ba", linewidth=1)
     ax.text(dim_x - 0.03, (top_y + bottom_y) / 2, f"L = {spring['length']} mm",
-            ha="center", va="center", fontsize=10, color="#4a5b6b", rotation=90)
+            ha="center", va="center", fontsize=10, color="#4a5b6b", rotation=90, fontproperties=fp)
 
     # สเปกด้านขวา
     info_x = 0.5 + body_r + 0.15
@@ -121,7 +140,7 @@ def draw_spring_figure(spring):
         f"จำนวนที่ใช้ = {spring['n']} ตัว",
     ]
     for i, line in enumerate(specs):
-        ax.text(info_x, 0.75 - i * 0.15, line, fontsize=10.5, color="#182430")
+        ax.text(info_x, 0.75 - i * 0.15, line, fontsize=10.5, color="#182430", fontproperties=fp)
 
     ax.set_xlim(0, 1.3)
     ax.set_ylim(0, 1.1)
@@ -135,6 +154,12 @@ def draw_spring_figure(spring):
 # ========================================================================
 st.title("เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด ⚙️")
 st.caption("คำนวณแรงตัด แรงสตริป แรงกดรวม และแนะนำสเปกสปริงมาตรฐาน (ISO 10243)")
+
+if THAI_FONT_NAME is None:
+    st.warning(
+        "⚠️ ไม่พบไฟล์ฟอนต์ไทยที่ fonts/Loma.otf ภาพประกอบสปริงอาจแสดงตัวอักษรไทยไม่ถูกต้อง "
+        "กรุณาตรวจสอบว่าอัปโหลดโฟลเดอร์ fonts/ ขึ้น GitHub ไปพร้อมกับไฟล์นี้ด้วย"
+    )
 
 with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
     st.markdown("### **สูตรและที่มาของการคำนวณ**")
@@ -203,7 +228,6 @@ with col_left:
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
     st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
 
-    # ดึงข้อมูลจาก MATERIALS โดยเช็กดัชนีตำแหน่งตัวเลขที่ถูกต้องปลอดภัย 100%
     if selected_mat != "กำหนดเอง...":
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
         default_tau = float(mat_data[1])
