@@ -344,13 +344,16 @@ with col_left:
     st.caption("💡 Maximum Springs: ข้อจำกัดของพื้นที่ในแม่พิมพ์ ว่าสามารถใส่สปริงลงไปได้มากที่สุดกี่ตัว")
 
     st.markdown("---")
-    st.markdown("### **ขนาดแม่พิมพ์ (สำหรับพิจารณา)**")
+    st.markdown("### **แม่พิมพ์ฝั่งพันช์ (สำหรับพิจารณา)**")
 
     die_width = st.number_input("ความกว้างแม่พิมพ์ (mm)", value=300.0, step=10.0)
     st.caption("💡 Die Width: ความกว้างของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
 
     die_length = st.number_input("ความยาวแม่พิมพ์ (mm)", value=400.0, step=10.0)
     st.caption("💡 Die Length: ความยาวของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
+
+    die_thickness = st.number_input("ความหนาแม่พิมพ์ (mm)", value=50.0, step=5.0)
+    st.caption("💡 Die Thickness: ความหนาของแผ่นแม่พิมพ์ฝั่งพันช์ ที่จะใช้ออกแบบจริง")
 
 # --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์ ---
 with col_right:
@@ -392,11 +395,11 @@ with col_right:
     else:
         st.error("ไม่พบสปริงที่รองรับระยะยุบที่ต้องการ ลองลดระยะยุบตัว (stroke/preload) ลง")
 
-    st.markdown("### **ขนาดแม่พิมพ์เทียบกับพื้นที่ที่ต้องใช้วางสปริง**")
+    st.markdown("### **แม่พิมพ์ฝั่งพันช์เทียบกับพื้นที่ที่ต้องใช้วางสปริง**")
 
     die_area = die_width * die_length  # mm²
     d1, d2, d3 = st.columns(3)
-    d1.metric("ขนาดแม่พิมพ์ (กว้าง×ยาว)", f"{die_width:,.0f} × {die_length:,.0f} mm")
+    d1.metric("ขนาดแม่พิมพ์ (กว้าง×ยาว×หนา)", f"{die_width:,.0f} × {die_length:,.0f} × {die_thickness:,.0f} mm")
     d2.metric("พื้นที่แม่พิมพ์ทั้งหมด", f"{die_area:,.0f} mm²")
 
     if best_spring:
