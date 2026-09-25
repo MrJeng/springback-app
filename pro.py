@@ -5,6 +5,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
+try:
+    import joblib
+except Exception:
+    joblib = None
+
 # ตั้งค่าหน้าเว็บให้แสดงผลเต็มหน้าจอ
 st.set_page_config(
     page_title="เครื่องคำนวณสปริงสตริปเปอร์ — แม่พิมพ์กดตัด",
@@ -77,6 +82,29 @@ if os.path.exists(_FONT_PATH):
         plt.rcParams["axes.unicode_minus"] = False
     except Exception:
         THAI_FONT_NAME = None
+
+# ----------------------------------------------------------------------
+# โหลดโมเดล Machine Learning (Neural Network) ที่ฝึกไว้ล่วงหน้าแล้ว
+# (ฝึกจากสูตรวิศวกรรม/มาตรฐาน ISO 10243 เดิม ด้วยไฟล์ train_model.py)
+# ใช้ทำนายผลคู่ขนานกับสูตรตรง เพื่อเปรียบเทียบให้เห็นว่า AI ทำนายใกล้เคียง
+# สูตรจริงแค่ไหน — สูตรวิศวกรรมยังคงเป็นคำตอบหลักที่ใช้ในการออกแบบเสมอ
+# ----------------------------------------------------------------------
+_MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
+ML_MODEL_A = None   # ทำนายระดับงานสปริง (Classification)
+ML_MODEL_B = None   # ทำนายจำนวนสปริง (Regression)
+ML_META = None
+ML_FEATURES = ["tau", "thickness", "perimeter", "kstrip", "sf",
+               "x_travel", "x_preload", "cap_springs", "f_design", "x_total"]
+
+if joblib is not None:
+    try:
+        ML_MODEL_A = joblib.load(os.path.join(_MODELS_DIR, "pipe_duty.joblib"))
+        ML_MODEL_B = joblib.load(os.path.join(_MODELS_DIR, "pipe_n.joblib"))
+        ML_META = joblib.load(os.path.join(_MODELS_DIR, "meta.joblib"))
+    except Exception:
+        ML_MODEL_A = None
+        ML_MODEL_B = None
+        ML_META = None
 
 # ----------------------------------------------------------------------
 # ฐานข้อมูลมาตรฐานสปริง ISO 10243 และวัสดุ
@@ -315,6 +343,15 @@ with col_left:
     cap_springs = st.number_input("จำนวนสปริงสูงสุด", value=4, step=1)
     st.caption("💡 Maximum Springs: ข้อจำกัดของพื้นที่ในแม่พิมพ์ ว่าสามารถใส่สปริงลงไปได้มากที่สุดกี่ตัว")
 
+    st.markdown("---")
+    st.markdown("### **ขนาดแม่พิมพ์ (สำหรับพิจารณา)**")
+
+    die_width = st.number_input("ความกว้างแม่พิมพ์ (mm)", value=300.0, step=10.0)
+    st.caption("💡 Die Width: ความกว้างของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
+
+    die_length = st.number_input("ความยาวแม่พิมพ์ (mm)", value=400.0, step=10.0)
+    st.caption("💡 Die Length: ความยาวของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
+
 # --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์ ---
 with col_right:
     st.markdown("### **ผลการคำนวณ**")
@@ -354,6 +391,92 @@ with col_right:
         )
     else:
         st.error("ไม่พบสปริงที่รองรับระยะยุบที่ต้องการ ลองลดระยะยุบตัว (stroke/preload) ลง")
+
+    st.markdown("### **ขนาดแม่พิมพ์เทียบกับพื้นที่ที่ต้องใช้วางสปริง**")
+
+    die_area = die_width * die_length  # mm²
+    d1, d2, d3 = st.columns(3)
+    d1.metric("ขนาดแม่พิมพ์ (กว้าง×ยาว)", f"{die_width:,.0f} × {die_length:,.0f} mm")
+    d2.metric("พื้นที่แม่พิมพ์ทั้งหมด", f"{die_area:,.0f} mm²")
+
+    if best_spring:
+        # ประมาณพื้นที่ที่ต้องเผื่อรอบสปริงแต่ละตัว (ระยะห่างขั้นต่ำ ~1.5 เท่าของ OD รอบรู)
+        clearance = best_spring["od"] * 1.5
+        area_per_spring = clearance * clearance
+        required_area = best_spring["n"] * area_per_spring
+        d3.metric("พื้นที่โดยประมาณที่สปริงต้องใช้", f"{required_area:,.0f} mm²")
+
+        if required_area <= die_area:
+            st.info(
+                f"✅ พื้นที่แม่พิมพ์ {die_width:,.0f}×{die_length:,.0f} mm เพียงพอสำหรับวางสปริง "
+                f"{best_spring['n']} ตัว (Ø{best_spring['od']} mm) โดยประมาณ "
+                f"(ใช้พื้นที่ราว {required_area / die_area * 100:.1f}% ของแม่พิมพ์)"
+            )
+        else:
+            st.warning(
+                f"⚠️ พื้นที่แม่พิมพ์ {die_width:,.0f}×{die_length:,.0f} mm อาจไม่พอสำหรับวางสปริง "
+                f"{best_spring['n']} ตัว (Ø{best_spring['od']} mm) — ต้องใช้พื้นที่ประมาณ {required_area:,.0f} mm² "
+                f"ลองเพิ่มขนาดแม่พิมพ์ หรือเลือกสปริงขนาดเล็กลง/จำนวนน้อยลง"
+            )
+        st.caption(
+            "หมายเหตุ: เป็นการประมาณพื้นที่คร่าวๆ เพื่อใช้พิจารณาเบื้องต้นเท่านั้น "
+            "(สมมติเผื่อระยะห่างรอบสปริงแต่ละตัว ~1.5 เท่าของ OD) ตำแหน่งวางจริงต้องออกแบบ "
+            "ร่วมกับตำแหน่ง punch/die และโครงสร้างแม่พิมพ์จริงเสมอ"
+        )
+
+    # --------------------------------------------------------------
+    # เปรียบเทียบผลจากสูตรวิศวกรรม กับผลที่ทำนายจาก Machine Learning
+    # (Neural Network ที่ฝึกไว้ล่วงหน้า) — ใช้เพื่อสาธิต/เปรียบเทียบเท่านั้น
+    # สูตรวิศวกรรมยังคงเป็นคำตอบหลักที่ใช้ออกแบบจริงเสมอ
+    # --------------------------------------------------------------
+    st.markdown("### **🤖 เปรียบเทียบกับผลทำนายจาก Machine Learning (Neural Network)**")
+
+    if ML_MODEL_A is not None and ML_MODEL_B is not None and best_spring:
+        ml_input = pd.DataFrame([{
+            "tau": tau, "thickness": thickness, "perimeter": perimeter,
+            "kstrip": kstrip, "sf": sf, "x_travel": x_travel,
+            "x_preload": x_preload, "cap_springs": cap_springs,
+            "f_design": f_design, "x_total": x_total,
+        }])[ML_FEATURES].values
+
+        pred_duty_idx = int(ML_MODEL_A.predict(ml_input)[0])
+        pred_duty_name = DUTIES[pred_duty_idx]["name"]
+        pred_n = ML_MODEL_B.predict(ml_input)[0]
+        pred_n_round = max(1, round(pred_n))
+
+        m1, m2 = st.columns(2)
+        m1.metric(
+            "AI ทำนาย: ระดับงานสปริง",
+            pred_duty_name,
+            delta="ตรงกับสูตร ✓" if pred_duty_name == best_spring["duty"] else "ต่างจากสูตร",
+            delta_color="normal" if pred_duty_name == best_spring["duty"] else "off",
+        )
+        m2.metric(
+            "AI ทำนาย: จำนวนสปริง",
+            f"{pred_n_round} ตัว",
+            delta=f"สูตรคำนวณได้ {best_spring['n']} ตัว",
+            delta_color="off",
+        )
+
+        acc_pct = ML_META["duty_accuracy"] * 100 if ML_META else None
+        r2_val = ML_META["n_r2"] if ML_META else None
+        acc_text = f"{acc_pct:.1f}%" if acc_pct is not None else "N/A"
+        r2_text = f"{r2_val:.3f}" if r2_val is not None else "N/A"
+
+        st.caption(
+            f"โมเดลฝึกจากข้อมูลจำลอง {ML_META['n_samples']:,} ชุด (สร้างจากสูตรวิศวกรรมเดิม) "
+            f"— ความแม่นยำโมเดลทำนายระดับงาน ≈ {acc_text}, ความแม่นยำโมเดลทำนายจำนวนสปริง (R²) ≈ {r2_text}. "
+            "ผลจาก AI ใช้เพื่อเปรียบเทียบ/สาธิตการประยุกต์ Machine Learning เท่านั้น "
+            "**คำตอบหลักที่ใช้ออกแบบจริงคือผลจากสูตรวิศวกรรมด้านบนเสมอ**"
+            if ML_META else
+            "ผลจาก AI ใช้เพื่อเปรียบเทียบ/สาธิตการประยุกต์ Machine Learning เท่านั้น "
+            "คำตอบหลักที่ใช้ออกแบบจริงคือผลจากสูตรวิศวกรรมด้านบนเสมอ"
+        )
+    else:
+        st.info(
+            "ℹ️ ยังไม่พบไฟล์โมเดล Machine Learning (models/*.joblib) — "
+            "รันไฟล์ train_model.py หนึ่งครั้งเพื่อฝึกและบันทึกโมเดลก่อนใช้งานส่วนนี้"
+        )
 
     st.markdown("### **สปริงมาตรฐานที่แนะนำ (คัดจากผลลัพธ์รวมดีที่สุด)**")
 
