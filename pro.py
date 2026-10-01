@@ -225,7 +225,7 @@ if THAI_FONT_NAME is None:
 
 with st.expander("📘 คลิกเพื่อดูสูตรการคำนวณทางวิศวกรรมที่ใช้ในระบบ (Formula Details)"):
     st.markdown("### **สูตรและที่มาของการคำนวณ**")
-    st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลของแม่พิมพ์กดตัด พร้อมความหมายตัวแปรดังนี้:")
+    st.markdown("ระบบจะประมวลผลตามลำดับสูตรคำนวณมาตรฐานสากลสำหรับแม่พิมพ์กดตัด พร้อมความหมายตัวแปรดังนี้:")
 
     st.latex(r"1.\quad F_{cut} = L \times t \times \tau")
     st.markdown("""
@@ -238,8 +238,8 @@ with st.expander("📘 คลิกเพื่อดูสูตรการค
 
     st.latex(r"2.\quad F_{strip} = F_{cut} \times \left(\frac{K_{strip}}{100}\right)")
     st.markdown("""
-    *   $F_{strip}$ = แรงถอนชิ้นงานที่จำเป็น (นิวตัน, N)
-    *   $K_{strip}$ = เปอร์เซ็นต์สัดส่วนแรงถอนแผ่นงาน (Stripping Force Factor, %)
+    *   $F_{strip}$ = แรงถอดชิ้นงานที่จำเป็น (นิวตัน, N)
+    *   $K_{strip}$ = เปอร์เซ็นต์สัดส่วนแรงถอดแผ่นงาน (Stripping Force Factor, %)
     """)
     st.markdown("---")
 
@@ -313,12 +313,12 @@ with col_left:
 
     perimeter = st.number_input(
         "เส้นรอบรูปตัดรวม L (mm)", value=220.0, step=10.0,
-        help="Total Cutting Perimeter: ความยาวเส้นรอบขอบของชิ้นงานตรงบริเวณที่ถูกใบมีด/พั้นช์ตัดทั้งหมดรวมกัน",
+        help="Total Cutting Perimeter: ความยาวเส้นรอบขอบของชิ้นงานตรงบริเวณที่ถูกใบมีด/พันช์ตัดทั้งหมดรวมกัน",
     )
 
     kstrip = st.number_input(
-        "สัดส่วนแรงถอนแผ่น K_strip (%)", value=default_kstrip, step=0.5,
-        help="Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพั้นช์ตัด",
+        "สัดส่วนแรงถอดแผ่น K_strip (%)", value=default_kstrip, step=0.5,
+        help="Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพันช์ตัด",
     )
 
     sf = st.number_input(
@@ -335,7 +335,7 @@ with col_left:
     )
 
     x_preload = st.number_input(
-        "ระยะพรีโหลดติดตั้ง preload (mm)", value=3.0, step=0.1,
+        "ระยะพรีโหลดติดตั้ง (mm)", value=3.0, step=0.1,
         help="Preload: ระยะที่สปริงถูกกดบีบไว้ตั้งแต่ตอนประกอบชุดแม่พิมพ์ เพื่อให้สปริงมีแรงกดตั้งต้นส่งผลทันที",
     )
 
@@ -379,7 +379,7 @@ with col_right:
 
     c1, c2, c3 = st.columns(3)
     c1.metric("แรงตัด F_cut", f"{f_cut:,.0f} N")
-    c2.metric("แรงถอนที่ต้องการ", f"{f_strip_req:,.0f} N")
+    c2.metric("แรงถอดที่ต้องการ", f"{f_strip_req:,.0f} N")
     c3.metric("แรงออกแบบรวม (×SF)", f"{f_design:,.0f} N")
 
     c4, c5, c6 = st.columns(3)
@@ -394,7 +394,7 @@ with col_right:
 
     if best_spring:
         st.success(
-            f"**แนะนำประเมิน:** ระดับงาน **{best_spring['duty']}** "
+            f"**ผลการประเมิน:** ระดับงาน **{best_spring['duty']}** "
             f"**Ø{best_spring['od']}×{best_spring['length']} mm** จำนวน **{best_spring['n']} ตัว** "
             f"ให้แรงรวม {best_spring['total']:,.0f} N ≥ แรงออกแบบ {f_design:,.0f} N "
             f"(ระยะยุบใช้งาน {x_travel} mm ไม่เกินระยะยุบสูงสุด {best_spring['max_def']:.1f} mm)"
