@@ -173,57 +173,40 @@ def calculate_spring_options(x_total, f_design, cap_springs):
     return results
 
 
-def draw_spring_figure(spring):
-    """วาดภาพประกอบสปริงคอยล์แบบง่าย ๆ ด้วย matplotlib ตามสเปกที่เลือก"""
+def draw_comparison_chart(spring_options, f_design, best_spring):
+    """วาดกราฟแท่งเปรียบเทียบแรงรวมที่สปริงแต่ละระดับงานให้ได้ เทียบกับแรงออกแบบที่ต้องการ"""
     fp = fm.FontProperties(fname=_FONT_PATH) if THAI_FONT_NAME else None
 
-    fig, ax = plt.subplots(figsize=(6, 3.2))
-    color = spring["hex"]
+    labels = [s["duty"] for s in spring_options]
+    totals = [s["total"] for s in spring_options]
+    colors = [s["hex"] for s in spring_options]
+    edge_colors = ["#ffce54" if s is best_spring else "none" for s in spring_options]
 
-    top_y, bottom_y = 0.9, 0.1
-    body_r = 0.12 + spring["od"] * 0.006
-    turns = 8
-    seg = (top_y - bottom_y) / turns
+    fig, ax = plt.subplots(figsize=(7, 3.6))
+    fig.patch.set_alpha(0)
+    ax.set_facecolor("none")
 
-    # ปลายสปริงบน-ล่าง (เส้นตรง)
-    ax.plot([0.5 - body_r, 0.5 + body_r], [top_y, top_y], color=color, linewidth=4)
-    ax.plot([0.5 - body_r, 0.5 + body_r], [bottom_y, bottom_y], color=color, linewidth=4)
+    bars = ax.bar(labels, totals, color=colors, edgecolor=edge_colors, linewidth=3, width=0.55)
 
-    # เส้นซิกแซกแทนคอยล์สปริง
-    xs, ys = [], []
-    for i in range(turns + 1):
-        x = 0.5 + body_r if i % 2 == 0 else 0.5 - body_r
-        y = top_y - i * seg
-        xs.append(x)
-        ys.append(y)
-    ax.plot(xs, ys, color=color, linewidth=4, solid_capstyle="round", solid_joinstyle="round")
+    # เส้นประบอกแรงออกแบบที่ต้องการ (เกณฑ์ขั้นต่ำ)
+    ax.axhline(f_design, color="#eef2f5", linestyle="--", linewidth=1.5)
+    ax.text(-0.45, f_design, f"แรงออกแบบที่ต้องการ {f_design:,.0f} N",
+            va="bottom", ha="left", fontsize=9.5, color="#eef2f5", fontproperties=fp)
 
-    # เส้นบอกขนาด OD (แนวนอน ด้านบน)
-    dim_y = top_y + 0.08
-    ax.plot([0.5 - body_r, 0.5 + body_r], [dim_y, dim_y], color="#93a7ba", linewidth=1)
-    ax.text(0.5, dim_y + 0.03, f"OD = Ø{spring['od']} mm", ha="center", fontsize=10,
-            color="#4a5b6b", fontproperties=fp)
+    for bar, s in zip(bars, spring_options):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + f_design * 0.02,
+                f"{s['total']:,.0f} N\n({s['n']} ตัว)", ha="center", va="bottom",
+                fontsize=9, color="#eef2f5", fontproperties=fp)
 
-    # เส้นบอกความยาว L (แนวตั้ง ด้านซ้าย)
-    dim_x = 0.5 - body_r - 0.12
-    ax.plot([dim_x, dim_x], [top_y, bottom_y], color="#93a7ba", linewidth=1)
-    ax.text(dim_x - 0.03, (top_y + bottom_y) / 2, f"L = {spring['length']} mm",
-            ha="center", va="center", fontsize=10, color="#4a5b6b", rotation=90, fontproperties=fp)
-
-    # สเปกด้านขวา
-    info_x = 0.5 + body_r + 0.15
-    specs = [
-        f"เกรด: {spring['duty']}",
-        f"k = {spring['k']:.1f} N/mm",
-        f"ยุบสูงสุด = {spring['max_def']:.1f} mm",
-        f"จำนวนที่ใช้ = {spring['n']} ตัว",
-    ]
-    for i, line in enumerate(specs):
-        ax.text(info_x, 0.75 - i * 0.15, line, fontsize=10.5, color="#182430", fontproperties=fp)
-
-    ax.set_xlim(0, 1.3)
-    ax.set_ylim(0, 1.1)
-    ax.axis("off")
+    ax.set_ylabel("แรงรวมที่สปริงรองรับได้ (N)", fontsize=10, color="#eef2f5", fontproperties=fp)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=10, color="#eef2f5", fontproperties=fp)
+    ax.tick_params(axis="y", colors="#eef2f5")
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+    for spine in ["left", "bottom"]:
+        ax.spines[spine].set_color("#5a6b80")
+    ax.set_ylim(0, max(totals + [f_design]) * 1.25)
     fig.tight_layout()
     return fig
 
@@ -507,15 +490,12 @@ with col_right:
             "เช่น Misumi, Raymond, Danly"
         )
 
-        st.markdown("### **ภาพประกอบสปริงที่เลือก**")
-        chosen_label = st.selectbox(
-            "เลือกสปริงจากตารางด้านบนเพื่อดูภาพประกอบ",
-            options=list(range(len(spring_options))),
-            format_func=lambda i: f"{spring_options[i]['duty']} — Ø{spring_options[i]['od']}×{spring_options[i]['length']} mm",
-            index=0,
-        )
-        fig = draw_spring_figure(spring_options[chosen_label])
+        st.markdown("### **กราฟเปรียบเทียบแรงรวมของสปริงแต่ละระดับงาน**")
+        fig = draw_comparison_chart(spring_options, f_design, best_spring)
         st.pyplot(fig)
-        st.caption("ภาพประกอบตามสัดส่วนโดยประมาณ ไม่ใช่ภาพถ่ายสินค้าจริง")
+        st.caption(
+            "กราฟแสดงแรงรวมที่สปริงแต่ละระดับงาน (Duty) ให้ได้ เทียบกับเส้นประ = แรงออกแบบขั้นต่ำที่ต้องการ "
+            "แท่งที่มีขอบสีทองคือตัวเลือกที่แนะนำ"
+        )
     else:
         st.warning("ไม่มีตัวเลือกสปริงให้แสดง")
