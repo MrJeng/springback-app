@@ -305,7 +305,6 @@ with col_left:
 
     mat_names_only = [m[0] for m in MATERIALS] + ["กำหนดเอง..."]
     selected_mat = st.selectbox("วัสดุแผ่นงาน (workpiece)", mat_names_only, index=1)
-    st.caption("💡 ชนิดของแผ่นโลหะที่จะนำมาปั๊มตัด ระบบจะดึงค่าแรงเฉือนมาตรฐานมาให้เบื้องต้น")
 
     if selected_mat != "กำหนดเอง...":
         mat_data = next(m for m in MATERIALS if m[0] == selected_mat)
@@ -317,43 +316,32 @@ with col_left:
 
     st.markdown("")
     tau = st.number_input("แรงเฉือนวัสดุ τ (MPa)", value=default_tau, step=10.0)
-    st.caption("💡 Shear Strength: ค่าความต้านทานแรงเฉือนของวัสดุ หาได้จากตารางสเปกโลหะหรือคู่มือวิศวกรรม")
 
     thickness = st.number_input("ความหนาแผ่น t (mm)", value=1.0, step=0.1)
-    st.caption("💡 Sheet Thickness: ความหนาของแผ่นเหล็กหรือแผ่นงานจริงที่จะถูกกดตัด")
 
     perimeter = st.number_input("เส้นรอบรูปตัดรวม L (mm)", value=220.0, step=10.0)
-    st.caption("💡 Total Cutting Perimeter: ความยาวเส้นรอบขอบของชิ้นงานตรงบริเวณที่ถูกใบมีด/พั้นช์ตัดทั้งหมดรวมกัน")
 
     kstrip = st.number_input("สัดส่วนแรงถอนแผ่น K_strip (%)", value=default_kstrip, step=0.5)
-    st.caption("💡 Stripping Force Factor: สัดส่วนแรงต้านที่จะดึงเศษชิ้นงานหรือแผ่นงานออกจากพั้นช์ตัด")
 
     sf = st.number_input("ค่าความปลอดภัย Safety Factor (SF)", value=1.3, step=0.1)
-    st.caption("💡 ค่าเผื่อความปลอดภัยทางวิศวกรรม เพื่อป้องกันปัญหาสปริงล้าหรือแรงกดไม่พอในระยะยาว")
 
     st.markdown("---")
     st.markdown("### **ข้อมูลระยะชักสปริง**")
 
     x_travel = st.number_input("ระยะยุบตัวสำหรับการทำงาน (mm)", value=5.2, step=0.1)
-    st.caption("💡 Working Stroke: ระยะที่แผ่นสปริงจะต้องยุบลงไปจริงๆ ตอนที่กลไกแม่พิมพ์กดลงมาทำงาน")
 
     x_preload = st.number_input("ระยะพรีโหลดติดตั้ง preload (mm)", value=3.0, step=0.1)
-    st.caption("💡 Preload: ระยะที่สปริงถูกกดบีบไว้ตั้งแต่ตอนประกอบชุดแม่พิมพ์ เพื่อให้สปริงมีแรงกดตั้งต้นส่งผลทันที")
 
     cap_springs = st.number_input("จำนวนสปริงสูงสุด", value=4, step=1)
-    st.caption("💡 Maximum Springs: ข้อจำกัดของพื้นที่ในแม่พิมพ์ ว่าสามารถใส่สปริงลงไปได้มากที่สุดกี่ตัว")
 
     st.markdown("---")
     st.markdown("### **แม่พิมพ์ฝั่งพันช์ (สำหรับพิจารณา)**")
 
     die_width = st.number_input("ความกว้างแม่พิมพ์ (mm)", value=300.0, step=10.0)
-    st.caption("💡 Die Width: ความกว้างของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
 
     die_length = st.number_input("ความยาวแม่พิมพ์ (mm)", value=400.0, step=10.0)
-    st.caption("💡 Die Length: ความยาวของแผ่นแม่พิมพ์ (die set) ที่จะใช้ออกแบบจริง")
 
     die_thickness = st.number_input("ความหนาแม่พิมพ์ (mm)", value=50.0, step=5.0)
-    st.caption("💡 Die Thickness: ความหนาของแผ่นแม่พิมพ์ฝั่งพันช์ ที่จะใช้ออกแบบจริง")
 
 # --- ฝั่งขวา: คำนวณสูตรและแสดงผลลัพธ์ ---
 with col_right:
